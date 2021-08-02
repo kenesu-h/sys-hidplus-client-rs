@@ -37,6 +37,7 @@ fn main() -> Result<(), ctrlc::Error> {
          */
         let ctrl_c_events = ctrl_channel()?;
         let ticks = tick(time::Duration::from_secs_f32(1.0 / 60.0));
+        println!("Client is ready to connect controllers.");
 
         loop {
           select! {
