@@ -21,9 +21,9 @@ While Pask has also rewritten their original client using C# - which features a
 GUI unlike mine, 
 [check it out](https://github.com/PaskaPinishkes/SwitchSysHidplusClient)! -
 they suspect it may only work for Windows. I intend to continue working on this
-client to support Macs and Linux machines, and to also use this opportunity as a
-learning experience and an outlet to achieve more experimental functions. As
-such, keep in mind that this client may have different features from Pask's
+client to support Macs and Linux machines. I also want to use this opportunity
+as a learning experience and an outlet to implement more experimental functions.
+As such, keep in mind that this client may have different features from Pask's
 client, which may or may not be cross-platform-friendly.
 
 For both Pask and I's convenience - so we can bounce ideas off each other -
