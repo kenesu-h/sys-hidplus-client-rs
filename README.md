@@ -62,14 +62,14 @@ Open your terminal and navigate to the directory containing your executable.
 ### Windows - cmd
 If you're using `cmd` to run the client, run the following:
 ```
-sys-hidplus-client-rs.exe
+client-rs.exe
 ```
 
 ### Windows - PowerShell (or other Unix-like shells), Mac, Linux
 If you're using PowerShell (or other Unix-like shells), Mac, or Linux, run the
 following:
 ```
-sys-hidplus-client-rs
+client-rs
 ```
 
 Either method should bring up a message and generate a file called `config.toml`
