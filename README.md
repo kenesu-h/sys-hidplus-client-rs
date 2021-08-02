@@ -2,7 +2,7 @@
 This is a client for the Nintendo Switch homebrew sysmodule "sys-hidplus",
 written in Rust. sys-hidplus is not my project and is developed by
 PaskaPanishkes. You can find its repo at: 
-[PaskaPanishkessys-hidplus](https://github.com/PaskaPinishkes/sys-hidplus)
+[PaskaPanishkes/sys-hidplus](https://github.com/PaskaPinishkes/sys-hidplus)
 
 # Context
 sys-hidplus is a sysmodule for a Nintendo Switch hacked to run custom firmware.
