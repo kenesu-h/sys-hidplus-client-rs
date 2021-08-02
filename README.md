@@ -8,7 +8,7 @@ PaskaPanishkes. You can find its repo at:
 sys-hidplus is a sysmodule for a Nintendo Switch hacked to run custom firmware.
 This sysmodule allows the Switch to receive controller inputs sent by a computer
 using a client. This in turn enables users to use normally unsupported
-controllers - such as an Xbox or PS4 controller.. This can be used alongside a
+controllers - such as an Xbox or PS4 controller. This can be used alongside a
 remote game streaming service such as Parsec to allow people play Switch games
 from practically anywhere.
 
