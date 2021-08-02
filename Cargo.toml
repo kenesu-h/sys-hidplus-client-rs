@@ -1,0 +1,18 @@
+[package]
+name = "client-rs"
+version = "1.0.0"
+authors = ["Kenneth <Kenneth@DESKTOP-VHTOUHH>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+confy = "0.4"
+crossbeam-channel = "0.5"
+ctrlc = { version = "3.1", features = ["termination"] }
+cute = "0.3"
+gilrs = "0.8"
+multiinput = "0.1"
+sdl2 = "0.34"
+serde = { version = "1.0", features = ["derive"] }
+structure = "0.1"
