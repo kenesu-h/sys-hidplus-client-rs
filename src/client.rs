@@ -13,7 +13,10 @@ use crate::{
   }
 };
 use std::{
-  collections::HashMap,
+  collections::{
+    HashMap,
+    HashSet
+  },
   net::UdpSocket,
   time
 };
@@ -98,28 +101,30 @@ impl Client {
     self.parse_buffer();
   }
 
+  // A helper method that disconnects any gamepads that aren't connected.
+  fn disconnect_inactive(&mut self) -> () {
+    for (gamepad_id, _) in self.input_map.clone() {
+      if !self.input_adapter.is_connected(&gamepad_id) {
+        match self.disconnect(&gamepad_id) {
+          Ok(msg) => println!("{}", msg),
+          Err(e) => println!("{}", e)
+        }
+      }
+    }
+  }
+
   fn disconnect(&mut self, gamepad_id: &usize) -> Result<String, String> {
     if self.input_map.contains_key(gamepad_id) {
       let i: usize = *self.input_map.get(gamepad_id).unwrap();
-      if !self.input_adapter.is_connected(gamepad_id) {
-        self.input_map.remove(gamepad_id);
-        self.pads[i].disconnect();
-        return Ok(
-          format!(
-            "Disconnected gamepad (id: {}) from slot {}.",
-            gamepad_id,
-            i + 1
-          )
-        );
-      } else {
-        return Err(
-          format!(
-            "A gamepad with an id of {} is already disconnected. Something \
-            must have gone wrong with disconnection.",
-            gamepad_id
-          )
-        );
-      }
+      self.input_map.remove(gamepad_id);
+      self.pads[i].disconnect();
+      return Ok(
+        format!(
+          "Disconnected gamepad (id: {}) from slot {}.",
+          gamepad_id,
+          i + 1
+        )
+      ); 
     } else {
       return Err(
         format!(
@@ -128,38 +133,12 @@ impl Client {
         )
       );
     }
-  }
+  } 
 
-  // A helper method that disconnects any gamepads that aren't connected.
-  fn disconnect_inactive(&mut self) -> () {
-    let mut i = 0;
-    /*
-    while let Some((gamepad_id, _)) = self.input_map.clone().iter().next() {
-      match self.disconnect(&gamepad_id) {
-        Ok(msg) => println!("{}", msg),
-        Err(e) => println!("{}", e)
-      }
-    }
-    */
-    for pad in &mut self.pads {
-      match pad.get_gamepad_id() {
-        Some(gamepad_id) => {
-          if !self.input_adapter.is_connected(gamepad_id) {
-            println!(
-              "Disconnected gamepad (id: {}) from slot {}.",
-              gamepad_id,
-              i + 1
-            );
-            self.input_map.remove(gamepad_id);
-            pad.disconnect();
-          }
-        },
-        None => ()
-      }
-      i = i + 1;
-    }
-  }
-
+  /**
+   * A helper method to fill the input buffer with events from the input
+   * adapter.
+   */
   fn fill_buffer(&mut self) -> () {
     for event in self.input_adapter.read() {
       if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
@@ -174,7 +153,7 @@ impl Client {
   }
 
   /**
-   * A helper method that parses events from an input adapter and updates
+   * A helper method that parses events from the input buffer and updates
    * corresponding gamepads.
    */
   fn parse_buffer(&mut self) -> () {
@@ -182,16 +161,11 @@ impl Client {
     while let Some((event, delay)) = self.input_buffer.pop() {
       if delay == 0 {
         if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
-          /*
-          if *self.pads[*i].get_gamepad_id() == Some(*event.get_gamepad_id()) {
-            self.pads[*i].update(&event);
-          }
-          */
           self.pads[*i].update(&event);
         } else {
           if let InputEvent::GamepadButton(gamepad_id, button, value) = event {
             if button == InputButton::RightBumper && value == 1.0 {
-              match self.assign_pad(&gamepad_id) {
+              match self.connect(&gamepad_id) {
                 Ok(msg) => println!("{}", msg),
                 Err(e) => println!("{}", e)
               }
@@ -210,20 +184,21 @@ impl Client {
    * type to an open slot, while mapping said ID the corresponding index. Slots
    * are open so as long as they are not equal to None, or if the associated
    * controller is reported by the respective input reader as disconnected.
+   *
+   * Is O(n^2) in the context of parse_buffer(), but at least controller
+   * assignment shouldn't happen often.
    */
-  fn assign_pad(
-    &mut self, gamepad_id: &usize
-  ) -> Result<String, String> {
-    let mut i: usize = 0;
-    for pad in &mut self.pads {
-      if match pad.get_gamepad_id() {
-        Some(gamepad_id) => !self.input_adapter.is_connected(gamepad_id),
-        None => true
-      } {
+  fn connect(&mut self, gamepad_id: &usize) -> Result<String, String> {
+    let mut mapped: HashSet<&usize> = HashSet::new();
+    for value in self.input_map.values() {
+      mapped.insert(value);
+    }
+    for i in 0..self.pads.len() {
+      if !mapped.contains(&i) {
         let switch_pad: SwitchPad = self.config.get_switch_pads()[i];
         if switch_pad != SwitchPad::Disconnected {
           self.input_map.insert(*gamepad_id, i);
-          pad.connect(gamepad_id, switch_pad);
+          self.pads[i].connect(gamepad_id, switch_pad);
           return Ok(
             format!(
               "Gamepad (id: {}) connected to slot {}.",
@@ -233,11 +208,10 @@ impl Client {
           );
         }
       }
-      i = i + 1;
     }
     return Err(
       format!(
-        "Couldn't assign gamepad (id: {}) since there were no slots available.",
+        "Couldn't connect gamepad (id: {}) since no slots are available.",
         gamepad_id
       )
     );
