@@ -7,8 +7,9 @@ use crate::input::adapter::common::{
 use serde::{Serialize, Deserialize};
 
 // An enum representing the different Switch controllers that can be emulated.
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum SwitchPad {
+  Disconnected,
   ProController,
   JoyConLSide,
   JoyConRSide,
@@ -111,21 +112,25 @@ impl SwitchButton {
       InputButton::Select => Ok(Self::Minus),
       
       InputButton::North => match switch_pad {
+        SwitchPad::Disconnected => Err(format!("No map for disconnected pad.")),
         SwitchPad::ProController => Ok(Self::X),
         SwitchPad::JoyConLSide => Ok(Self::DR),
         SwitchPad::JoyConRSide => Ok(Self::Y)
       },
       InputButton::East => match switch_pad {
+        SwitchPad::Disconnected => Err(format!("No map for disconnected pad.")),
         SwitchPad::ProController => Ok(Self::A),
         SwitchPad::JoyConLSide => Ok(Self::DD),
         SwitchPad::JoyConRSide => Ok(Self::X)
       },
       InputButton::South => match switch_pad {
+        SwitchPad::Disconnected => Err(format!("No map for disconnected pad.")),
         SwitchPad::ProController => Ok(Self::B),
         SwitchPad::JoyConLSide => Ok(Self::DL),
         SwitchPad::JoyConRSide => Ok(Self::A)
       },
       InputButton::West => match switch_pad {
+        SwitchPad::Disconnected => Err(format!("No map for disconnected pad.")),
         SwitchPad::ProController => Ok(Self::Y),
         SwitchPad::JoyConLSide => Ok(Self::DU),
         SwitchPad::JoyConRSide => Ok(Self::B)
@@ -148,7 +153,7 @@ impl SwitchButton {
  */
 pub struct EmulatedPad {
   gamepad_id: Option<usize>,
-  switch_pad: Option<SwitchPad>,
+  switch_pad: SwitchPad,
   keyout: i32,
   left: (i32, i32),
   right: (i32, i32)
@@ -162,7 +167,7 @@ impl EmulatedPad {
   pub fn new() -> EmulatedPad {
     return EmulatedPad {
       gamepad_id: None,
-      switch_pad: None,
+      switch_pad: SwitchPad::Disconnected,
       keyout: 0,
       left: (0, 0),
       right: (0, 0)
@@ -174,7 +179,7 @@ impl EmulatedPad {
     return &self.gamepad_id;
   }
 
-  pub fn get_switch_pad(&self) -> &Option<SwitchPad> {
+  pub fn get_switch_pad(&self) -> &SwitchPad {
     return &self.switch_pad;
   }
 
@@ -193,7 +198,7 @@ impl EmulatedPad {
   // A method that connects this pad by assigning a gamepad ID and Switch pad.
   pub fn connect(&mut self, gamepad_id: &usize, switch_pad: SwitchPad) -> () {
     self.gamepad_id = Some(*gamepad_id);
-    self.switch_pad = Some(switch_pad);
+    self.switch_pad = switch_pad;
   }
 
   /**
@@ -202,7 +207,7 @@ impl EmulatedPad {
    */
   pub fn disconnect(&mut self) -> () {
     self.gamepad_id = None;
-    self.switch_pad = None;
+    self.switch_pad = SwitchPad::Disconnected;
   }
 
   // Attempts to update this pad using an input event.
@@ -217,10 +222,10 @@ impl EmulatedPad {
 
   // A helper method to update the keyout for a button.
   fn update_keyout(&mut self, button: &InputButton, value: &f32) -> () {
-    if self.switch_pad.is_some() {
+    if self.switch_pad != SwitchPad::Disconnected {
       match &SwitchButton::map_button(
         button,
-        &self.switch_pad.as_ref().unwrap()
+        &self.switch_pad
       ) {
         Ok(switch_button) => self.set_del_bit(
           &switch_button.value(),

@@ -10,20 +10,36 @@ use serde::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize)]
 pub struct Config {
   server_ip: String,
+  switch_pads: Vec<SwitchPad>,
+  input_delays: Vec<i8>
+  /*
   switch_pad_1: Option<SwitchPad>,
+  input_delay_1: i8,
   switch_pad_2: Option<SwitchPad>,
+  input_delay_2: i8,
   switch_pad_3: Option<SwitchPad>,
-  switch_pad_4: Option<SwitchPad>
+  input_delay_3: i8,
+  switch_pad_4: Option<SwitchPad>,
+  input_delay_4: i8
+  */
 }
 
 impl Default for Config {
   fn default() -> Config {
     return Config {
       server_ip: "".to_string(),
+      switch_pads: c!(SwitchPad::ProController, for _i in 0..4),
+      input_delays: c!(0, for _i in 0..4)
+      /*
       switch_pad_1: Some(SwitchPad::ProController),
+      input_delay_1: 0,
       switch_pad_2: Some(SwitchPad::ProController),
+      input_delay_2: 0,
       switch_pad_3: Some(SwitchPad::ProController),
-      switch_pad_4: Some(SwitchPad::ProController)
+      input_delay_3: 0,
+      switch_pad_4: Some(SwitchPad::ProController),
+      input_delay_4: 0
+      */
     }
   }
 }
@@ -33,12 +49,11 @@ impl Config {
     return &self.server_ip;
   }
 
-  pub fn pads_to_vec(&self) -> Vec<Option<SwitchPad>> {
-    return vec!(
-      self.switch_pad_1,
-      self.switch_pad_2,
-      self.switch_pad_3,
-      self.switch_pad_4
-    );
+  pub fn get_switch_pads(&self) -> &Vec<SwitchPad> {
+    return &self.switch_pads;
+  }
+
+  pub fn get_input_delays(&self) -> &Vec<i8> {
+    return &self.input_delays;
   }
 }

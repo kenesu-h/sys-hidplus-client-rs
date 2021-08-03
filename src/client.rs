@@ -42,6 +42,7 @@ pub struct Client {
 
   input_adapter: Box<dyn InputAdapter>,
   input_map: HashMap<usize, usize>,
+  input_buffer: Vec<(InputEvent, i8)>,
 
   pads: Vec<EmulatedPad>,
 }
@@ -77,6 +78,7 @@ impl Client {
             sock: sock,
             input_adapter: input_adapter,
             input_map: HashMap::new(),
+            input_buffer: vec!(),
             pads: c![EmulatedPad::new(), for _i in 0..4]
           }
         ),
@@ -92,12 +94,53 @@ impl Client {
    */
   pub fn update_pads(&mut self) -> () {
     self.disconnect_inactive();
-    self.parse_events();
+    self.fill_buffer();
+    self.parse_buffer();
+  }
+
+  fn disconnect(&mut self, gamepad_id: &usize) -> Result<String, String> {
+    if self.input_map.contains_key(gamepad_id) {
+      let i: usize = *self.input_map.get(gamepad_id).unwrap();
+      if !self.input_adapter.is_connected(gamepad_id) {
+        self.input_map.remove(gamepad_id);
+        self.pads[i].disconnect();
+        return Ok(
+          format!(
+            "Disconnected gamepad (id: {}) from slot {}.",
+            gamepad_id,
+            i + 1
+          )
+        );
+      } else {
+        return Err(
+          format!(
+            "A gamepad with an id of {} is already disconnected. Something \
+            must have gone wrong with disconnection.",
+            gamepad_id
+          )
+        );
+      }
+    } else {
+      return Err(
+        format!(
+          "No gamepad with an id of {} is connected.",
+          gamepad_id
+        )
+      );
+    }
   }
 
   // A helper method that disconnects any gamepads that aren't connected.
   fn disconnect_inactive(&mut self) -> () {
     let mut i = 0;
+    /*
+    while let Some((gamepad_id, _)) = self.input_map.clone().iter().next() {
+      match self.disconnect(&gamepad_id) {
+        Ok(msg) => println!("{}", msg),
+        Err(e) => println!("{}", e)
+      }
+    }
+    */
     for pad in &mut self.pads {
       match pad.get_gamepad_id() {
         Some(gamepad_id) => {
@@ -117,27 +160,49 @@ impl Client {
     }
   }
 
+  fn fill_buffer(&mut self) -> () {
+    for event in self.input_adapter.read() {
+      if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
+        self.input_buffer.insert(
+          0,
+          (event, self.config.get_input_delays()[*i]),
+        );
+      } else {
+        self.input_buffer.insert(0, (event, 0));
+      }
+    }
+  }
+
   /**
    * A helper method that parses events from an input adapter and updates
    * corresponding gamepads.
    */
-  fn parse_events(&mut self) -> () {
-    for event in self.input_adapter.read() {
-      if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
-        if *self.pads[*i].get_gamepad_id() == Some(*event.get_gamepad_id()) {
+  fn parse_buffer(&mut self) -> () {
+    let mut new_buffer: Vec<(InputEvent, i8)> = vec!();
+    while let Some((event, delay)) = self.input_buffer.pop() {
+      if delay == 0 {
+        if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
+          /*
+          if *self.pads[*i].get_gamepad_id() == Some(*event.get_gamepad_id()) {
+            self.pads[*i].update(&event);
+          }
+          */
           self.pads[*i].update(&event);
-        }
-      } else {
-        if let InputEvent::GamepadButton(gamepad_id, button, value) = event {
-          if button == InputButton::RightBumper && value == 1.0 {
-            match self.assign_pad(&gamepad_id) {
-              Ok(msg) => println!("{}", msg),
-              Err(e) => println!("{}", e)
+        } else {
+          if let InputEvent::GamepadButton(gamepad_id, button, value) = event {
+            if button == InputButton::RightBumper && value == 1.0 {
+              match self.assign_pad(&gamepad_id) {
+                Ok(msg) => println!("{}", msg),
+                Err(e) => println!("{}", e)
+              }
             }
           }
         }
+      } else {
+        new_buffer.insert(0, (event, delay - 1));
       }
     }
+    self.input_buffer = new_buffer;
   }
 
   /**
@@ -155,19 +220,17 @@ impl Client {
         Some(gamepad_id) => !self.input_adapter.is_connected(gamepad_id),
         None => true
       } {
-        match self.config.pads_to_vec()[i] {
-          Some(switch_pad) => {
-            self.input_map.insert(*gamepad_id, i);
-            pad.connect(gamepad_id, switch_pad);
-            return Ok(
-              format!(
-                "Gamepad (id: {}) connected to slot {}.",
-                &gamepad_id,
-                i + 1
-              )
-            );
-          },
-          None => ()
+        let switch_pad: SwitchPad = self.config.get_switch_pads()[i];
+        if switch_pad != SwitchPad::Disconnected {
+          self.input_map.insert(*gamepad_id, i);
+          pad.connect(gamepad_id, switch_pad);
+          return Ok(
+            format!(
+              "Gamepad (id: {}) connected to slot {}.",
+              &gamepad_id,
+              i + 1
+            )
+          );
         }
       }
       i = i + 1;
@@ -264,14 +327,12 @@ pub struct PackedData {
 }
 
 // Maps a switch pad (or lack thereof) to its integer counterpart.
-fn switch_pad_to_value(switch_pad: &Option<SwitchPad>) -> i8 {
+fn to_switch_pad_value(switch_pad: &SwitchPad) -> i8 {
   return match switch_pad {
-    Some(pad) => match pad {
-      SwitchPad::ProController => 1,
-      SwitchPad::JoyConLSide => 2,
-      SwitchPad::JoyConRSide => 3
-    },
-    None => return 0
+    SwitchPad::Disconnected => 0,
+    SwitchPad::ProController => 1,
+    SwitchPad::JoyConLSide => 2,
+    SwitchPad::JoyConRSide => 3
   }
 }
 
@@ -282,28 +343,28 @@ impl PackedData {
       magic: 0x3276,
       connected: connected as u16,
 
-      con_type: switch_pad_to_value(pads[0].get_switch_pad()) as u16,
+      con_type: to_switch_pad_value(pads[0].get_switch_pad()) as u16,
       keys: *pads[0].get_keyout() as u64,
       joy_l_x: pads[0].get_left().0,
       joy_l_y: pads[0].get_left().1,
       joy_r_x: pads[0].get_right().0,
       joy_r_y: pads[0].get_right().1,
 
-      con_type2: switch_pad_to_value(pads[1].get_switch_pad()) as u16,
+      con_type2: to_switch_pad_value(pads[1].get_switch_pad()) as u16,
       keys2: *pads[1].get_keyout() as u64,
       joy_l_x2: pads[1].get_left().0,
       joy_l_y2: pads[1].get_left().1,
       joy_r_x2: pads[1].get_right().0,
       joy_r_y2: pads[1].get_right().1,
 
-      con_type3: switch_pad_to_value(pads[2].get_switch_pad()) as u16,
+      con_type3: to_switch_pad_value(pads[2].get_switch_pad()) as u16,
       keys3: *pads[2].get_keyout() as u64,
       joy_l_x3: pads[2].get_left().0,
       joy_l_y3: pads[2].get_left().1,
       joy_r_x3: pads[2].get_right().0,
       joy_r_y3: pads[2].get_right().1,
 
-      con_type4: switch_pad_to_value(pads[3].get_switch_pad()) as u16,
+      con_type4: to_switch_pad_value(pads[3].get_switch_pad()) as u16,
       keys4: *pads[3].get_keyout() as u64,
       joy_l_x4: pads[3].get_left().0,
       joy_l_y4: pads[3].get_left().1,
