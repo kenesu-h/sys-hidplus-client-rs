@@ -152,7 +152,6 @@ impl SwitchButton {
  * but not connected to anything.
  */
 pub struct EmulatedPad {
-  gamepad_id: Option<usize>,
   switch_pad: SwitchPad,
   keyout: i32,
   left: (i32, i32),
@@ -166,7 +165,6 @@ impl EmulatedPad {
    */
   pub fn new() -> EmulatedPad {
     return EmulatedPad {
-      gamepad_id: None,
       switch_pad: SwitchPad::Disconnected,
       keyout: 0,
       left: (0, 0),
@@ -175,10 +173,6 @@ impl EmulatedPad {
   }
 
   // Getters
-  pub fn get_gamepad_id(&self) -> &Option<usize> {
-    return &self.gamepad_id;
-  }
-
   pub fn get_switch_pad(&self) -> &SwitchPad {
     return &self.switch_pad;
   }
@@ -196,8 +190,7 @@ impl EmulatedPad {
   }
 
   // A method that connects this pad by assigning a gamepad ID and Switch pad.
-  pub fn connect(&mut self, gamepad_id: &usize, switch_pad: SwitchPad) -> () {
-    self.gamepad_id = Some(*gamepad_id);
+  pub fn connect(&mut self, switch_pad: SwitchPad) -> () {
     self.switch_pad = switch_pad;
   }
 
@@ -206,7 +199,6 @@ impl EmulatedPad {
    * pad, leaving both with values of None.
    */
   pub fn disconnect(&mut self) -> () {
-    self.gamepad_id = None;
     self.switch_pad = SwitchPad::Disconnected;
   }
 

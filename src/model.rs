@@ -2,9 +2,7 @@ use crate::{
   config::Config,
   input::{
     adapter::common::{
-      InputButton,
-      InputEvent,
-      InputAdapter,
+      InputEvent
     },
     switch::{
       SwitchPad,
@@ -13,10 +11,6 @@ use crate::{
   }
 };
 use std::{
-  collections::{
-    HashMap,
-    HashSet
-  },
   net::UdpSocket,
   time
 };
@@ -39,18 +33,13 @@ use std::{
  *   gamepad.
  *   - This allows controller updates to be O(n) as opposed to O(n^2).
  */
-pub struct Client {
-  config: Config,
+pub struct ClientModel {
+  server_ip: String,
   sock: UdpSocket,
-
-  input_adapter: Box<dyn InputAdapter>,
-  input_map: HashMap<usize, usize>,
-  input_buffer: Vec<(InputEvent, i8)>,
-
   pads: Vec<EmulatedPad>,
 }
 
-impl Client {
+impl ClientModel {
   /**
    * Constructs a new client from a config, and two input readers respectively
    * corresponding to general input APIs and RawInput.
@@ -59,10 +48,7 @@ impl Client {
    * Empty input maps are initialized, as well as emulated gamepads with types
    * of None.
    */
-  pub fn new(
-    config: Config,
-    input_adapter: Box<dyn InputAdapter>
-  ) -> Result<Client, String> {
+  pub fn new(config: &Config) -> Result<ClientModel, String> {
     if config.get_server_ip().is_empty() {
       return Err(
         format!(
@@ -76,145 +62,38 @@ impl Client {
     } else {
       return match UdpSocket::bind("0.0.0.0:8000") {
         Ok(sock) => Ok(
-          Client {
-            config: config,
+          ClientModel {
+            server_ip: config.get_server_ip().to_string(),
             sock: sock,
-            input_adapter: input_adapter,
-            input_map: HashMap::new(),
-            input_buffer: vec!(),
             pads: c![EmulatedPad::new(), for _i in 0..4]
           }
         ),
         Err(e) => Err(format!("{}", e))
       }
     }
-  } 
-
-  /**
-   * A method that updates all emulated gamepads, disconnecting any unconnected
-   * gamepads and parses input adapter events. Should be called at a fixed time
-   * interval.
-   */
-  pub fn update_pads(&mut self) -> () {
-    self.disconnect_inactive();
-    self.fill_buffer();
-    self.parse_buffer();
   }
 
-  // A helper method that disconnects any gamepads that aren't connected.
-  fn disconnect_inactive(&mut self) -> () {
-    for (gamepad_id, _) in self.input_map.clone() {
-      if !self.input_adapter.is_connected(&gamepad_id) {
-        match self.disconnect(&gamepad_id) {
-          Ok(msg) => println!("{}", msg),
-          Err(e) => println!("{}", e)
-        }
-      }
-    }
+  // A method to return the number of emulated gamepads in this client model.
+  pub fn num_pads(&self) -> usize {
+    return self.pads.len();
   }
 
-  fn disconnect(&mut self, gamepad_id: &usize) -> Result<String, String> {
-    if self.input_map.contains_key(gamepad_id) {
-      let i: usize = *self.input_map.get(gamepad_id).unwrap();
-      self.input_map.remove(gamepad_id);
-      self.pads[i].disconnect();
-      return Ok(
-        format!(
-          "Disconnected gamepad (id: {}) from slot {}.",
-          gamepad_id,
-          i + 1
-        )
-      ); 
-    } else {
-      return Err(
-        format!(
-          "No gamepad with an id of {} is connected.",
-          gamepad_id
-        )
-      );
-    }
-  } 
+  // A method to update a gamepad in this client model to be disconnected.
+  pub fn disconnect_pad(&mut self, i: &usize) -> () {
+    self.pads[*i].disconnect();
+  }
 
-  /**
-   * A helper method to fill the input buffer with events from the input
-   * adapter.
-   */
-  fn fill_buffer(&mut self) -> () {
-    for event in self.input_adapter.read() {
-      if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
-        self.input_buffer.insert(
-          0,
-          (event, self.config.get_input_delays()[*i]),
-        );
-      } else {
-        self.input_buffer.insert(0, (event, 0));
-      }
-    }
+  // A method to update a gamepad in this client model using an input event.
+  pub fn update_pad(&mut self, i: &usize, event: &InputEvent) -> () {
+    self.pads[*i].update(event);
   }
 
   /**
-   * A helper method that parses events from the input buffer and updates
-   * corresponding gamepads.
+   * A method to update a gamepad in this client model to be connected as a
+   * given switch pad.
    */
-  fn parse_buffer(&mut self) -> () {
-    let mut new_buffer: Vec<(InputEvent, i8)> = vec!();
-    while let Some((event, delay)) = self.input_buffer.pop() {
-      if delay == 0 {
-        if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
-          self.pads[*i].update(&event);
-        } else {
-          if let InputEvent::GamepadButton(gamepad_id, button, value) = event {
-            if button == InputButton::RightBumper && value == 1.0 {
-              match self.connect(&gamepad_id) {
-                Ok(msg) => println!("{}", msg),
-                Err(e) => println!("{}", e)
-              }
-            }
-          }
-        }
-      } else {
-        new_buffer.insert(0, (event, delay - 1));
-      }
-    }
-    self.input_buffer = new_buffer;
-  }
-
-  /**
-   * A helper method that attempts to assign the given gamepad ID and switch pad
-   * type to an open slot, while mapping said ID the corresponding index. Slots
-   * are open so as long as they are not equal to None, or if the associated
-   * controller is reported by the respective input reader as disconnected.
-   *
-   * Is O(n^2) in the context of parse_buffer(), but at least controller
-   * assignment shouldn't happen often.
-   */
-  fn connect(&mut self, gamepad_id: &usize) -> Result<String, String> {
-    let mut mapped: HashSet<&usize> = HashSet::new();
-    for value in self.input_map.values() {
-      mapped.insert(value);
-    }
-    for i in 0..self.pads.len() {
-      if !mapped.contains(&i) {
-        let switch_pad: SwitchPad = self.config.get_switch_pads()[i];
-        if switch_pad != SwitchPad::Disconnected {
-          self.input_map.insert(*gamepad_id, i);
-          self.pads[i].connect(gamepad_id, switch_pad);
-          return Ok(
-            format!(
-              "Gamepad (id: {}) connected to slot {}.",
-              &gamepad_id,
-              i + 1
-            )
-          );
-        }
-      }
-    }
-    return Err(
-      format!(
-        "Couldn't connect gamepad (id: {}) since no slots are available.",
-        gamepad_id
-      )
-    );
+  pub fn connect_pad(&mut self, i: &usize, switch_pad: &SwitchPad) -> () {
+    self.pads[*i].connect(*switch_pad);
   }
 
   /**
@@ -225,7 +104,7 @@ impl Client {
   pub fn update_server(&self) -> Result<(), String> {
     match self.sock.send_to(
       &PackedData::new(&self.pads, 4).to_bytes(),
-      format!("{}:8000", self.config.get_server_ip())
+      format!("{}:8000", self.server_ip)
     ) {
       Err(e) => return Err(
         format!("The following error occurred: {}.", e)
@@ -251,7 +130,7 @@ impl Client {
     while start.elapsed().as_millis() < 3000 {
       match self.sock.send_to(
         &PackedData::new(&self.pads, 4).to_bytes(),
-        format!("{}:8000", self.config.get_server_ip())
+        format!("{}:8000", self.server_ip)
       ) {
         Err(e) => return Err(e.to_string()),
         Ok(_) => ()
