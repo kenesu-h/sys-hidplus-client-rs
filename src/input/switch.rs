@@ -5,9 +5,11 @@ use crate::input::adapter::common::{
 };
 
 use serde::{Serialize, Deserialize};
+use strum_macros::EnumString;
+use std::str::FromStr;
 
 // An enum representing the different Switch controllers that can be emulated.
-#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize, EnumString)]
 pub enum SwitchPad {
   Disconnected,
   ProController,

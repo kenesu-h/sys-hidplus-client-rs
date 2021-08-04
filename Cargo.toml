@@ -16,3 +16,5 @@ multiinput = "0.1"
 sdl2 = "0.34"
 serde = { version = "1.0", features = ["derive"] }
 structure = "0.1"
+strum = "0.21"
+strum_macros = "0.21"

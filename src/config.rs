@@ -11,7 +11,7 @@ use serde::{Serialize, Deserialize};
 pub struct Config {
   server_ip: String,
   switch_pads: Vec<SwitchPad>,
-  input_delays: Vec<i8>
+  input_delays: Vec<u8>
   /*
   switch_pad_1: Option<SwitchPad>,
   input_delay_1: i8,
@@ -44,7 +44,17 @@ impl Default for Config {
   }
 }
 
-impl Config { 
+impl Config {
+  pub fn new(
+    server_ip: String, switch_pads: Vec<SwitchPad>, input_delays: Vec<u8>
+  ) -> Config {
+    return Config {
+      server_ip: server_ip,
+      switch_pads: switch_pads,
+      input_delays: input_delays
+    }
+  }
+
   pub fn get_server_ip(&self) -> &String {
     return &self.server_ip;
   }
@@ -53,7 +63,7 @@ impl Config {
     return &self.switch_pads;
   }
 
-  pub fn get_input_delays(&self) -> &Vec<i8> {
+  pub fn get_input_delays(&self) -> &Vec<u8> {
     return &self.input_delays;
   }
 }

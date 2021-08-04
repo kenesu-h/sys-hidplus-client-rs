@@ -11,46 +11,169 @@ use crate::{
   }
 };
 
+use confy::ConfyError;
 use std::{
   collections::{
     HashMap,
     HashSet
-  }
+  },
+  process,
+  str::FromStr
 };
 
 pub struct InputController {
   switch_pads: Vec<SwitchPad>,
-  input_delays: Vec<i8>,
+  input_delays: Vec<u8>,
+
   model: ClientModel,
+  running: bool,
 
   input_adapter: Box<dyn InputAdapter>,
   input_map: HashMap<usize, usize>,
-  input_buffer: Vec<(InputEvent, i8)>
+  input_buffer: Vec<(InputEvent, u8)>,
+
+  command_buffer: Vec<String>
 }
 
 impl InputController {
   pub fn new(
-    config: &Config, model: ClientModel, input_adapter: Box<dyn InputAdapter>
+    model: ClientModel, input_adapter: Box<dyn InputAdapter>
   ) -> InputController {
     return InputController {
-      switch_pads: config.get_switch_pads().clone(),
-      input_delays: config.get_input_delays().clone(),
+      switch_pads: vec!(),
+      input_delays: vec!(),
+
       model: model,
+      running: false,
 
       input_adapter: input_adapter,
       input_map: HashMap::new(),
-      input_buffer: vec!()
+      input_buffer: vec!(),
+
+      command_buffer: vec!()
     }
   }
 
-  pub fn update_inputs(&mut self) -> () {
-    self.disconnect_inactive();
-    self.fill_buffer();
-    self.parse_buffer();
+  /**
+   * Setters, but these fields should only be set (outside of the controller) by
+   * actually sending commands to the controller.
+   */
+  fn set_server_ip(&mut self, server_ip: &String) -> Result<String, String> {
+    self.model.set_server_ip(server_ip);
+    return self.save_config();
   }
 
-  pub fn update_server(&mut self) -> Result<(), String> {
-    return self.model.update_server();
+  fn set_switch_pad(
+    &mut self, i: &usize, switch_pad: &SwitchPad
+  ) -> Result<String, String> {
+    self.switch_pads[*i] = *switch_pad;
+    return self.save_config();
+  }
+
+  fn set_input_delay(
+    &mut self, i: &usize, input_delay: &u8
+  ) -> Result<String, String> {
+    self.input_delays[*i] = *input_delay;
+    return self.save_config();
+  }
+
+  pub fn load_config(&mut self) -> Result<String, String> {
+    let confy_load: Result<Config, ConfyError> =
+      confy::load_path("./config.toml");
+    return match confy_load {
+      Ok(config) => {
+        self.model.set_server_ip(config.get_server_ip());
+        self.switch_pads = config.get_switch_pads().clone();
+        self.input_delays = config.get_input_delays().clone();
+        return Ok("Config successfully loaded.".to_string());
+      },
+      Err(e) => Err(
+        format!("Error occurred while loading config: {}", e)
+      )
+    }
+  } 
+
+  pub fn save_config(&self) -> Result<String, String> {
+    return match confy::store_path("./config.toml", self.current_config())  {
+      Ok(_) => Ok("Config successfully saved.".to_string()),
+      Err(e) => Err(
+        format!("Error occurred while saving config: {}", e)
+      )
+    }
+  }
+
+  fn current_config(&self) -> Config {
+    return Config::new(
+      self.model.get_server_ip().to_string(),
+      self.switch_pads.clone(),
+      self.input_delays.clone()
+    );
+  }
+
+  pub fn start(&mut self) -> Result<String, String> {
+    if self.model.get_server_ip().is_empty() {
+      return Err(
+        "The server_ip field in config.toml is empty! If this is your first \
+        time running the client, please set it to the IP of your Switch."
+        .to_string()
+      );
+    } else {
+      if self.running {
+        return Err("The client is already running.".to_string());
+      } else {
+        self.running = true;
+        return Ok("The client is ready to receive inputs.".to_string());
+      }
+    }
+  }
+
+  pub fn stop(&mut self) -> Result<String, String> {
+    if self.running {
+      self.running = false;
+      match self.cleanup() {
+        Ok(_) => return Ok(format!("The client has been stopped.")),
+        Err(e) => return Err(e)
+      }
+    } else {
+      return Err(format!("The client isn't running."));
+    }
+  }
+
+  pub fn exit(&mut self) -> Result<String, String> {
+    if self.running {
+      return self.stop();
+    }
+    return Ok("It's okay to exit now.".to_string());
+  }
+
+  pub fn update(&mut self) -> () {
+    self.update_inputs();
+  }
+
+  fn update_inputs(&mut self) -> () {
+    self.disconnect_inactive();
+    self.fill_input_buffer();
+    self.parse_input_buffer();
+  }
+
+  fn update_server(&mut self) -> Result<(), Vec<String>> {
+    let mut errors: Vec<String> = vec!();
+    match self.model.update_server() {
+      Ok(msg) => return Ok(msg),
+      Err(e) => {
+        errors.push(e);
+        if let Err(e_stop) = self.stop() {
+          errors.push(e_stop);
+        }
+        return Err(
+          format!(
+            "Received the following errors while attempting to update then \
+            cleanup the server: {:?}",
+            errors
+          )
+        );
+      }
+    }
   }
 
   pub fn cleanup(&mut self) -> Result<String, String> {
@@ -94,7 +217,7 @@ impl InputController {
    * A helper method to fill the input buffer with events from the input
    * adapter.
    */
-  fn fill_buffer(&mut self) -> () {
+  fn fill_input_buffer(&mut self) -> () {
     for event in self.input_adapter.read() {
       if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
         self.input_buffer.insert(
@@ -111,8 +234,8 @@ impl InputController {
    * A helper method that parses events from the input buffer and updates
    * corresponding gamepads.
    */
-  fn parse_buffer(&mut self) -> () {
-    let mut new_buffer: Vec<(InputEvent, i8)> = vec!();
+  fn parse_input_buffer(&mut self) -> () {
+    let mut new_buffer: Vec<(InputEvent, u8)> = vec!();
     while let Some((event, delay)) = self.input_buffer.pop() {
       if delay == 0 {
         if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
@@ -170,6 +293,83 @@ impl InputController {
         gamepad_id
       )
     );
+  }
+
+  pub fn parse_command_buffer(&mut self) -> () {
+    while let Some(command) = self.command_buffer.pop() {
+      let parts: Vec<&str> = command.split(" ").collect::<Vec<&str>>();
+      match self.parse_command(&parts[0], &parts[1..]) {
+        Ok(_) => (),
+        Err(e) => println!("{}", e)
+      }
+    }
+  }
+
+  fn parse_command(
+    &mut self, keyword: &str, args: &[&str]
+  ) -> Result<String, String> {
+    return match keyword {
+      "start" => return self.start(),
+      "stop" => return self.stop(),
+      "exit" => self.exit(),
+      "set_server_ip" => {
+        if args.len() >= 1 {
+          return self.set_server_ip(&args[0].to_string());
+        } else {
+          return Err(
+            "Usage: set_server_ip server_ip\n
+            \n
+            Example, if your Switch's IP is 192.168.1.199:\n
+            set_server_ip 192.168.1.199"
+            .to_string()
+          );
+        }
+      },
+      "set_switch_pad" => {
+        if args.len() >= 2 {
+          if let Ok(i) = args[0].parse::<usize>() {
+            if let Ok(switch_pad) = SwitchPad::from_str(args[1]) {
+              return self.set_switch_pad(&i, &switch_pad);
+            }
+          }
+        }
+        return Err(
+          "Usage: set_switch_pad i switch_pad\n
+          \n
+          i must be either 0 or a positive integer. It also represents the \
+          target index: slot numbers are always equal to i + 1.\n
+          switch_pad must be one of: Disconnected, ProController, JoyConLSide, \
+          JoyConRSide.\n
+          \n
+          Example, if you want to set the controller in slot 2 to a sideways \
+          left JoyCon:\n
+          set_switch_pad 1 JoyConLSide"
+          .to_string()
+        );
+      },
+      "set_input_delay" => {
+        if args.len() >= 2 {
+          if let Ok(i) = args[0].parse::<usize>() {
+            if let Ok(input_delay) = args[1].parse::<u8>() {
+              return self.set_input_delay(&i, &input_delay);
+            }
+          }
+        }
+        return Err(
+          "Usage: set_input_delay i input_delay\n
+          \n
+          i must be either 0 or a positive integer. It also represents the \
+          target index: slot numbers are always equal to i + 1.\n
+          input_delay must be either 0 or a positive integer less than 256.\n
+          \n
+          Example, if you want to set the input delay of the controller in \
+          slot 3 to 6 frames:\n
+          set_input_delay 2 6"
+          .to_string()
+        );
+      },
+      _ => Err(format!("{} is not a valid command.", keyword))
+    }
   }
 }
 

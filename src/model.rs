@@ -48,29 +48,25 @@ impl ClientModel {
    * Empty input maps are initialized, as well as emulated gamepads with types
    * of None.
    */
-  pub fn new(config: &Config) -> Result<ClientModel, String> {
-    if config.get_server_ip().is_empty() {
-      return Err(
-        format!(
-          "The server_ip field in config.toml is empty! If this is your first \
-          time running the client, please open it using a text editor and fill \
-          it out with the IP of your Switch. For example, if the IP is \
-          192.168.1.199, the server_ip field should look like this: \
-          server_ip = '192.168.1.199'"
-        )
-      );
-    } else {
-      return match UdpSocket::bind("0.0.0.0:8000") {
-        Ok(sock) => Ok(
-          ClientModel {
-            server_ip: config.get_server_ip().to_string(),
-            sock: sock,
-            pads: c![EmulatedPad::new(), for _i in 0..4]
-          }
-        ),
-        Err(e) => Err(format!("{}", e))
-      }
+  pub fn new() -> Result<ClientModel, String> {
+    return match UdpSocket::bind("0.0.0.0:8000") {
+      Ok(sock) => Ok(
+        ClientModel {
+          server_ip: config.get_server_ip().to_string(),
+          sock: sock,
+          pads: c![EmulatedPad::new(), for _i in 0..4]
+        }
+      ),
+      Err(e) => Err(format!("{}", e))
     }
+  }
+
+  pub fn get_server_ip(&self) -> &String {
+    return &self.server_ip;
+  }
+
+  pub fn set_server_ip(&mut self, server_ip: &String) -> () {
+    self.server_ip = server_ip.to_string();
   }
 
   // A method to return the number of emulated gamepads in this client model.

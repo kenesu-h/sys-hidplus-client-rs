@@ -36,6 +36,23 @@ fn ctrl_channel() -> Result<Receiver<()>, ctrlc::Error> {
 
 // A helper function to clean up the client, whether upon an error or closing.
 fn main() -> Result<(), ctrlc::Error> {
+  match ClientModel::new() {
+    Ok(mut model) => {
+      let mut controller: InputController = InputController::new(
+        model,
+        Box::new(SdlAdapter::new())
+      );
+      let ticks = tick(time::Duration::from_secs_f32(1.0 / 60.0));
+
+      controller.load_config();
+      loop {
+        select! {
+
+        }
+      }
+    },
+    Err(e) => panic!("{}", e)
+  }
   // TODO: Clean up more later, eventually we'd want to move to a MVC format.
   match confy::load_path("./config.toml") {
     Ok(config) => {
