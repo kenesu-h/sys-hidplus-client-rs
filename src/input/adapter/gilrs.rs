@@ -15,8 +15,8 @@ use gilrs::{
 use std::convert::TryInto;
 
 /**
- * A struct representing a cross-platform input adapter that will read from a
- * GilRs instance.
+ * Represents a cross-platform input adapter that will read from a GilRs
+ * instance.
  * 
  * As of the time of documentation, GilRs does not support any other gamepad
  * APIs on Windows other than XInput, and as a result will not support more than
@@ -35,7 +35,7 @@ impl GilrsAdapter {
     }
   }
 
-  // A helper method to adapt GilRs button event values into an InputEvent.
+  // Adapts GilRs button event values into an InputEvent.
   fn to_button_event(
     &self, gamepad_id: &GamepadId, button: &Button, value: &f32
   ) -> Result<InputEvent, String> {
@@ -51,7 +51,7 @@ impl GilrsAdapter {
     }
   }
 
-  // A helper method to adapt GilRs axis event values into an InputEvent.
+  // Adapts GilRs axis event values into an InputEvent.
   fn to_axis_event(
     &self, gamepad_id: &GamepadId, axis: &Axis, value: &f32
   ) -> Result<InputEvent, String> {
@@ -68,7 +68,7 @@ impl GilrsAdapter {
   }
 
 
-  // A helper method to map GilRs buttons into InputButtons.
+  // Maps GilRs buttons into InputButtons.
   fn to_button(&self, button: &Button) -> Result<InputButton, String> {
     return match button {
       Button::South => Ok(InputButton::South),
@@ -89,7 +89,7 @@ impl GilrsAdapter {
     }
   }
 
-  // A helper method to map GilRs axes into InputAxes.
+  // Maps GilRs axes into InputAxes.
   fn to_axis(&self, axis: &Axis) -> Result<InputAxis, String> {
     return match axis {
       Axis::LeftStickX => Ok(InputAxis::LeftX),

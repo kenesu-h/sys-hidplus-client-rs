@@ -5,18 +5,14 @@ pub mod model;
 pub mod view;
 
 use crate::{
-  config::Config,
   input::adapter::sdl::SdlAdapter,
   model::ClientModel,
   controller::{
     ClientController
   },
-  view::{
-    common::ClientView,
-    cli::CLIView
-  }
+  view::cli::CLIView
 };
-use crossbeam_channel::{bounded, tick, Receiver, select};
+use crossbeam_channel::{tick, select};
 use std::time;
 
 #[macro_use(c)]
@@ -25,8 +21,7 @@ extern crate cute;
 #[macro_use]
 extern crate structure;
 
-// A helper function to clean up the client, whether upon an error or closing.
-fn main() -> Result<(), ctrlc::Error> {
+fn main() -> () {
   match ClientModel::new() {
     Ok(model) => {
       let mut controller: ClientController = ClientController::new(

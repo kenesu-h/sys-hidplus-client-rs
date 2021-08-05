@@ -1,5 +1,4 @@
 use crate::{
-  config::Config,
   input::{
     adapter::common::{
       InputEvent
@@ -16,22 +15,9 @@ use std::{
 };
 
 /**
- * A struct representing the main input client.
- * 
- * There's a lot that goes into a client, but the bare minimum is:
- * - A socket to communicate with the input server.
- * - The IP of the input server.
- *   - This must be preserved between update calls.
- * - A way to read inputs from a general gamepad API.
- * - A list of the emulated gamepads.
- *
- * We also need these, although the reasoning behind them might be more obscure:
- * - A way to read inputs from RawInput.
- *   - This is needed for XInput-incompatible gamepads and to possibly support
- *     4+ players.
- * - HashMaps mapping gamepad IDs to the index of their corresponding emulated
- *   gamepad.
- *   - This allows controller updates to be O(n) as opposed to O(n^2).
+ * Represents a model for an input client. The model is responsible for keeping
+ * track of the emulated gamepads and sending their states over to the input
+ * server - or in other words, a Nintendo Switch.
  */
 pub struct ClientModel {
   server_ip: String,
@@ -41,12 +27,9 @@ pub struct ClientModel {
 
 impl ClientModel {
   /**
-   * Constructs a new client from a config, and two input readers respectively
-   * corresponding to general input APIs and RawInput.
-   *
-   * The socket itself is bound to port 8000, but no server IP is specified.
-   * Empty input maps are initialized, as well as emulated gamepads with types
-   * of None.
+   * Constructs a model where the socket is bound to port 8000 and all emulated
+   * gamepads are initially set to Disconnected. The server IP is also initially
+   * blank as well, but this can be updated through its respective setter.
    */
   pub fn new() -> Result<ClientModel, String> {
     return match UdpSocket::bind("0.0.0.0:8000") {
@@ -61,42 +44,47 @@ impl ClientModel {
     }
   }
 
+  // Server IP Getter
   pub fn get_server_ip(&self) -> &String {
     return &self.server_ip;
   }
 
+  // Server IP Setter
   pub fn set_server_ip(&mut self, server_ip: &String) -> () {
     self.server_ip = server_ip.to_string();
   }
 
-  // A method to return the number of emulated gamepads in this client model.
+  // Returns the number of emulated gamepads in this model.
   pub fn num_pads(&self) -> usize {
     return self.pads.len();
   }
 
-  // A method to update a gamepad in this client model to be disconnected.
+  /**
+   * Disconnects a gamepad from this model.
+   * 
+   * This really just sets the target gamepad to a type of Disconnected; it
+   * doesn't actually get rid of the gamepad itself.
+   */
   pub fn disconnect_pad(&mut self, i: &usize) -> () {
     self.pads[*i].disconnect();
   }
 
-  // A method to update a gamepad in this client model using an input event.
+  // Updates a target gamepad in this model using an input event.
   pub fn update_pad(&mut self, i: &usize, event: &InputEvent) -> () {
     self.pads[*i].update(event);
   }
 
   /**
-   * A method to update a gamepad in this client model to be connected as a
-   * given switch pad.
+   * Connects a gamepad to this model.
+   *
+   * Like disconnect_pad(), this just sets the target gamepad to the given
+   * Switch pad type.
    */
   pub fn connect_pad(&mut self, i: &usize, switch_pad: &SwitchPad) -> () {
     self.pads[*i].connect(*switch_pad);
   }
 
-  /**
-   * A method that sends the current emulated pad states to the Switch.
-   *
-   * Like update_pads(), this should be called at a fixed time interval.
-   */
+  // Sends the current emulated pad states to the input server.
   pub fn update_server(&self) -> Result<(), String> {
     match self.sock.send_to(
       &PackedData::new(&self.pads, 4).to_bytes(),
@@ -112,14 +100,11 @@ impl ClientModel {
   }
 
   /**
-   * A method disconnects all connected gamepads.
+   * Disconnects all connected gamepads through an unfortunately-brute-force
+   * method.
    *
-   * This unfortunately uses a brute-force approach of disconnecting all the
-   * gamepads, but there's no other way that doesn't involve modifying the
-   * server. For now, a list of gamepads (all set to None) will be spammed over
-   * the course of 3 seconds in order for shit to somehow stick onto the wall.
-   * This hasn't failed so far, but this may change if a network happens to be
-   * unstable.
+   * Without an established protocol, this seems to be the only way to
+   * disconnect everything reliably.
    */
   pub fn cleanup(&mut self) -> Result<String, String> {
     for pad in &mut self.pads {
@@ -141,7 +126,7 @@ impl ClientModel {
 }
 
 /**
- * A struct representing packed data to be sent to a Switch.
+ * Represents packed data to be sent to an input server.
  * 
  * This isn't the cleanest or most dynamic thing by any means, but I wanted it
  * to be consistent with the original data structure.

@@ -14,12 +14,17 @@ use std::{
   thread
 };
 
+/**
+ * Represents a command line view that reads from stdin and adds inputs to a
+ * command buffer.
+ */
 pub struct CLIView {
   receiver: Receiver<String>,
   command_buffer: Vec<String>
 }
 
 impl CLIView {
+  // Constructs a view with an stdin channel and an empty command buffer.
   pub fn new() -> CLIView {
     return CLIView {
       receiver: spawn_stdin_channel(),
@@ -28,7 +33,12 @@ impl CLIView {
   }
 }
 
-// https://stackoverflow.com/a/55201400
+/**
+ * Spawns a stdin channel so we can read inputs from stdin in a non-blocking
+ * way.
+ *
+ * Credits: https://stackoverflow.com/a/55201400
+ */
 fn spawn_stdin_channel() -> Receiver<String> {
   let (tx, rx) = mpsc::channel::<String>();
   thread::spawn(move || loop {

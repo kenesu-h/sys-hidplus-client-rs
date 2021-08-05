@@ -6,9 +6,8 @@ use crate::input::adapter::common::{
 
 use serde::{Serialize, Deserialize};
 use strum_macros::EnumString;
-use std::str::FromStr;
 
-// An enum representing the different Switch controllers that can be emulated.
+// Represents the different Switch controllers that can be emulated.
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize, EnumString)]
 pub enum SwitchPad {
   Disconnected,
@@ -23,7 +22,7 @@ pub enum SwitchPad {
   */
 }
 
-// An enum representing all the different buttons on a Switch controller.
+// Represents all the different buttons on a Switch controller.
 pub enum SwitchButton {
   A,
   B,
@@ -142,16 +141,12 @@ impl SwitchButton {
 }
 
 /**
- * A struct representing an emulated Switch controller.
- * 
- * Emulated pads MUST contain:
- * - An integer representing the buttons pressed.
- * - Two tuples representing the states of the left and right analog sticks
- *   respectively.
- * 
- * Optionally they can have a Switch pad type and a reference to their
- * respective gamepad, since it's entirely possible for a pad to be initialized,
- * but not connected to anything.
+ * Represents an emulated Switch controller.
+ *
+ * The buttons pressed on a emulated pad are represented through a "keyout"
+ * field, which is updated through bitwise operations. This could be done
+ * through a map of buttons to booleans instead, but this is more true to the
+ * original client and, in all honesty, is way more compact.
  */
 pub struct EmulatedPad {
   switch_pad: SwitchPad,
@@ -191,20 +186,17 @@ impl EmulatedPad {
     return &self.right;
   }
 
-  // A method that connects this pad by assigning a gamepad ID and Switch pad.
+  // Connects this pad by assigning a Switch pad.
   pub fn connect(&mut self, switch_pad: SwitchPad) -> () {
     self.switch_pad = switch_pad;
   }
 
-  /**
-   * A method that disconnects this pad by removing its gamepad ID and Switch
-   * pad, leaving both with values of None.
-   */
+  // Disconnects this pad by setting its Switch pad type to Disconnected.
   pub fn disconnect(&mut self) -> () {
     self.switch_pad = SwitchPad::Disconnected;
   }
 
-  // Attempts to update this pad using an input event.
+  // Updates this pad using an input event.
   pub fn update(&mut self, event: &InputEvent) -> () {
     match event {
       InputEvent::GamepadButton(_, button, value) => {
@@ -214,7 +206,7 @@ impl EmulatedPad {
     }
   }
 
-  // A helper method to update the keyout for a button.
+  // Updates this pad's keyout.
   fn update_keyout(&mut self, button: &InputButton, value: &f32) -> () {
     if self.switch_pad != SwitchPad::Disconnected {
       match &SwitchButton::map_button(
@@ -230,7 +222,7 @@ impl EmulatedPad {
     }
   }
 
-  // A helper method to update the stick values for an axis.
+  // Updates the stick values for an axis.
   fn update_axis(&mut self, axis: &InputAxis, value: &f32) -> () {
     let converted: i32 = (*value * 32767.0) as i32;
     match axis {
@@ -242,8 +234,8 @@ impl EmulatedPad {
   }
 
   /**
-   * A helper method to update the keyout using a bitwise OR if an input value
-   * isn't 0, otherwise a bitwise AND using the complement.
+   * Updates the keyout using a bitwise OR if an input value isn't 0, otherwise
+   * a bitwise AND using the complement.
    */
   fn set_del_bit(&mut self, bit: &i32, value: &i32) -> () {
     if value != &0 {

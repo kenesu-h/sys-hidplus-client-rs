@@ -1,4 +1,4 @@
-// An enum representing the buttons that are universally available on gamepads.
+// Represents the buttons that are universally available on gamepads.
 #[derive(PartialEq, Debug)]
 pub enum InputButton {
   North,
@@ -17,7 +17,7 @@ pub enum InputButton {
   DPadRight
 }
 
-// An enum representing the axes that are universally available on gamepads.
+// Represents the axes that are universally available on gamepads.
 #[derive(Debug)]
 pub enum InputAxis {
   LeftX,
@@ -26,7 +26,7 @@ pub enum InputAxis {
   RightY
 }
 
-// An enum representing the different events possible on a gamepad.
+// Represents the different events possible on a gamepad.
 #[derive(Debug)]
 pub enum InputEvent {
   GamepadButton(usize, InputButton, f32),
@@ -34,7 +34,7 @@ pub enum InputEvent {
 }
 
 impl InputEvent {
-  // A method that returns that the gamepad ID of this event.
+  // Returns that the gamepad ID of this event.
   pub fn get_gamepad_id(&self) -> &usize {
     return match self {
       Self::GamepadButton(gamepad_id, _, _) => gamepad_id,
@@ -44,19 +44,13 @@ impl InputEvent {
 }
 
 /**
- * A trait representing a input adapter that reads from an gamepad input library
- * of some kind, from which an input event can be generated.
+ * Represents a input adapter that reads from an gamepad input library of some
+ * kind, from which an input event can be generated.
  */
 pub trait InputAdapter {
-  /**
-   * A method that reads from an input library's buffer and returns the buffered
-   * events.
-   */
+  // Reads from an input library's buffer and returns the buffered events.
   fn read(&mut self) -> Vec<InputEvent>;
 
-  /**
-   * A method that checks the input library to verify if a gamepad of a given ID
-   * is connected.
-   */
+  // Checks the input library to verify if a gamepad of a given ID is connected.
   fn is_connected(&mut self, gamepad_id: &usize) -> bool;
 }

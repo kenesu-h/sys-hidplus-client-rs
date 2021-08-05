@@ -23,8 +23,8 @@ use sdl2::{
 use std::collections::HashMap;
 
 /**
- * A struct representing a cross-platform input adapter that will read from an
- * SDL instance.
+ * Representing a cross-platform input adapter that will read from an SDL
+ * instance.
  * 
  * SDL so far seems to bypass the 4 XInput controller limit and supports both
  * Xbox and PS4 controllers. Not sure how it performs cross-platform-wise, and
@@ -61,6 +61,7 @@ impl SdlAdapter {
     }
   }
 
+  // Converts the components of an SDL button event to an InputEvent.
   fn to_button_event(
     &self, which: &u32, button: &Button, pressed: bool
   ) -> Result<InputEvent, String> {
@@ -76,6 +77,7 @@ impl SdlAdapter {
     }
   }
 
+  // Maps whether a button is pressed to its respective f32 value.
   fn to_button_value(&self, pressed: bool) -> f32 {
     return match pressed {
       true => 1.0,
@@ -83,6 +85,7 @@ impl SdlAdapter {
     }
   }
 
+  // Maps an SDL button to an InputButton.
   fn to_button(&self, button: &Button) -> Result<InputButton, String> {
     return match button {
       Button::A => Ok(InputButton::South),
@@ -103,6 +106,7 @@ impl SdlAdapter {
     }
   }
 
+  // Converts the components of an SDL axis event to an InputEvent.
   fn to_axis_event(
     &self, which: &u32, axis: &Axis, value: &i16
   ) -> Result<InputEvent, String> {
@@ -118,6 +122,7 @@ impl SdlAdapter {
     }
   }
 
+  // Maps an SDL axis to an InputAxis.
   fn to_axis(&self, axis: &Axis) -> Result<InputAxis, String> {
     return match axis {
       Axis::LeftX => Ok(InputAxis::LeftX),
@@ -130,31 +135,21 @@ impl SdlAdapter {
     }
   } 
 
+  /**
+   * Converts the integer value of an SDL axis event into an f32 value.
+   *
+   * Additionally, the Y-axes for the left and right analog sticks are inverted
+   * so that their inputs are like normal, not-inverted analog sticks.
+   */
   fn to_axis_value(&self, axis: &Axis, value: &i16) -> f32 {
     let calculated: f32 = (*value as f32) / 32767.0;
     return match axis {
       Axis::LeftY | Axis::RightY => -calculated,
       _ => calculated
     }
-  }
+  } 
 
-  fn is_trigger(&self, axis: &Axis) -> bool {
-    return match axis {
-      Axis::TriggerLeft | Axis::TriggerRight => true,
-      _ => false
-    }
-  }
-
-  fn to_trigger(&self, axis: &Axis) -> Result<InputButton, String> {
-    return match axis {
-      Axis::TriggerLeft => Ok(InputButton::LeftTrigger),
-      Axis::TriggerRight => Ok(InputButton::RightTrigger),
-      _ => Err(
-        format!("{:?} is not a trigger axis.", axis)
-      )
-    }
-  }
-
+  // Converts the components of an SDL trigger event to an InputEvent.
   fn to_trigger_event(
     &self, which: &u32, axis: &Axis, value: &i16
   ) -> Result<InputEvent, String> {
@@ -171,6 +166,25 @@ impl SdlAdapter {
         )
       ),
       Err(e) => Err(e)
+    }
+  } 
+
+  // Maps an SDL axis to an InputButton representing a trigger.
+  fn to_trigger(&self, axis: &Axis) -> Result<InputButton, String> {
+    return match axis {
+      Axis::TriggerLeft => Ok(InputButton::LeftTrigger),
+      Axis::TriggerRight => Ok(InputButton::RightTrigger),
+      _ => Err(
+        format!("{:?} is not a trigger axis.", axis)
+      )
+    }
+  }
+
+  // Returns whether the given SDL axis is a trigger.
+  fn is_trigger(&self, axis: &Axis) -> bool {
+    return match axis {
+      Axis::TriggerLeft | Axis::TriggerRight => true,
+      _ => false
     }
   }
 }

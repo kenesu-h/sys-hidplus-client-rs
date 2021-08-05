@@ -16,8 +16,8 @@ use multiinput::{
 };
 
 /**
- * A struct representing a RawInput input adapter that will read from the
- * multiinput library using an instance of an input manager.
+ * Representing a RawInput input adapter that will read from the multiinput
+ * library using an instance of an input manager.
  * 
  * This input reader is ONLY meant to be used for RawInput devices, and at the
  * time of writing this, has only been tested with DS4s (PS4 controllers).
@@ -52,7 +52,7 @@ impl MultiInputAdapter {
     }
   } 
 
-  // A helper method to parse a list of buffered events into InputEvents.
+  // Parses a list of buffered events into InputEvents.
   fn parse_buffered(&mut self, buffered: Vec<RawEvent>) -> Vec<InputEvent> {
     let mut events: Vec<InputEvent> = vec!();
     for event in buffered {
@@ -87,7 +87,7 @@ impl MultiInputAdapter {
     return events;
   }
 
-  // A helper method to adapt multiinput button event values into an InputEvent.
+  // Adapts multiinput button event values into an InputEvent.
   fn to_button_event(
     &self, device_id: &usize, button: &usize, state: &State
   ) -> Result<InputEvent, String> {
@@ -103,7 +103,7 @@ impl MultiInputAdapter {
     }
   }
 
-  // A helper method to adapt multiinput axis event values into an InputEvent.
+  // Adapts multiinput axis event values into an InputEvent.
   fn to_axis_event(
     &self, device_id: &usize, axis: &Axis, value: &f64
   ) -> Result<InputEvent, String> {
@@ -120,8 +120,7 @@ impl MultiInputAdapter {
   }
 
   /**
-   * A method that "corrects" a value for an axis, assuming the gamepad involved
-   * is a DS4.
+   * "Corrects" a value for an axis, assuming the gamepad involved is a DS4.
    *
    * For some reason, the right stick uses the Z and RZ axes; Z for horizontal
    * and RZ for vertical. Their values also happen to be inverted, unlike the
@@ -135,7 +134,7 @@ impl MultiInputAdapter {
     }
   }
 
-  // A helper method to map a button (in the form of a usize) to an InputButton.
+  // Maps a button (in the form of a usize) to an InputButton.
   fn to_button(&self, button: &usize) -> Result<InputButton, String> {
     return match button {
       0 => Ok(InputButton::West),
@@ -152,7 +151,7 @@ impl MultiInputAdapter {
     }
   }
 
-  // A helper method to map a button state to a value.
+  // Maps a button state to a value.
   fn to_button_value(&self, state: &State) -> f32 {
     return match state {
       State::Pressed => 1.0,
@@ -160,7 +159,7 @@ impl MultiInputAdapter {
     }
   }
 
-  // A helper method to map an axis to an InputAxis.
+  // Maps an axis to an InputAxis.
   fn to_axis(&self, axis: &Axis) -> Result<InputAxis, String> {
     return match axis {
       Axis::X => Ok(InputAxis::LeftX),
@@ -171,7 +170,7 @@ impl MultiInputAdapter {
     }
   }
 
-  // A helper method to adapt a hat switch to a MultiInputDPad.
+  // Adapts a hat switch to a MultiInputDPad.
   fn to_dpad(&self, hat_switch: &multiinput::HatSwitch) -> MultiInputDPad {
     return match hat_switch {
       HatSwitch::Center => MultiInputDPad::new(false, false, false, false),
@@ -202,7 +201,7 @@ impl InputAdapter for MultiInputAdapter {
 }
 
 /**
- * A struct intended to help represent d-pad inputs in a more intuitive way as opposed to a list of
+ * Represents d-pad inputs in a more intuitive way as opposed to a list of
  * InputEvents.
  *
  * Each field represents whether that cardinal direction is pressed.
@@ -215,7 +214,7 @@ struct MultiInputDPad {
 }
 
 impl MultiInputDPad {
-  // Constructs a new MultiInputDPad from whether the given directions are pressed.
+  // Constructs a new MultiInputDPad from whether each direction is pressed.
   pub fn new(up: bool, down: bool, left: bool, right: bool) -> MultiInputDPad {
     return MultiInputDPad {
       up: up,
@@ -225,7 +224,7 @@ impl MultiInputDPad {
     }
   }
 
-  // A method to convert the directions into a list of pairs of (InputButton, value as f32).
+  // Converts the directions to a list of pairs of (InputButton, value as f32).
   pub fn to_vec(&self) -> Vec<(InputButton, f32)> {
     return vec!(
       (InputButton::DPadUp, self.bool_to_value(&self.up)),
@@ -235,7 +234,7 @@ impl MultiInputDPad {
     )
   }
 
-  // A helper method to convert bools into their respective values.
+  // Convert bools to their respective values.
   fn bool_to_value(&self, b: &bool) -> f32 {
     return match b {
       true => 1.0,
