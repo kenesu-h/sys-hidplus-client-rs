@@ -93,7 +93,7 @@ impl ClientController {
     return self.save_config();
   }
 
-  pub fn load_config(&mut self) -> Result<String, String> {
+  fn load_config(&mut self) -> Result<String, String> {
     let confy_load: Result<Config, ConfyError> =
       confy::load_path("./config.toml");
     return match confy_load {
@@ -109,7 +109,7 @@ impl ClientController {
     }
   } 
 
-  pub fn save_config(&self) -> Result<String, String> {
+  fn save_config(&self) -> Result<String, String> {
     return match confy::store_path("./config.toml", self.current_config())  {
       Ok(_) => Ok("Config successfully saved.".to_string()),
       Err(e) => Err(
@@ -124,6 +124,19 @@ impl ClientController {
       self.switch_pads.clone(),
       self.input_delays.clone()
     );
+  }
+
+  fn restart(&mut self) -> Result<String, String> {
+    if self.running {
+      return match self.stop() {
+        Ok(_) => self.start(),
+        Err(e) => Err(e)
+      }
+    } else {
+      return Err(
+        "The client needs to be running in order to restart it.".to_string()
+      );
+    }
   }
 
   fn start(&mut self) -> Result<String, String> {
@@ -147,40 +160,61 @@ impl ClientController {
     if self.running {
       self.running = false;
       match self.cleanup() {
-        Ok(_) => return Ok(format!("The client has been stopped.")),
+        Ok(_) => return Ok("The client has been stopped.".to_string()),
         Err(e) => return Err(e)
       }
     } else {
-      return Err(format!("The client isn't running."));
+      return Err("The client isn't running.".to_string());
     }
   }
 
   fn exit(&mut self) -> Result<String, String> {
     if self.running {
-      match self.stop() {
-        Ok(_) => process::exit(0),
-        Err(_) => process::exit(1)
+      return match self.stop() {
+        Ok(_) => self.exit_0(),
+        Err(e) => self.exit_1(e)
       }
     } else {
-      process::exit(0);
+      return self.exit_0();
     }
+  }
+
+  fn exit_0(&mut self) -> Result<String, String> {
+    self.view.writeln("The client exited successfully. Goodbye!".to_string());
+    process::exit(0);
+  }
+
+  fn exit_1(&mut self, e: String) -> Result<String, String> {
+    self.view.writeln(
+      format!(
+        "The client did not exit successfully. The following error occurred: \
+        {}", e
+      )
+    );
+    process::exit(1);
   }
 
   pub fn update(&mut self) -> () {
     match self.view.update() {
       Ok(_) => (),
       Err(e) => {
-        println!("{}", e);
-        self.exit();
+        self.view.writeln(
+          format!(
+            "The following error occurred while updating the view: {}", e
+          )
+        );
+        match self.exit() {
+          Ok(_) => (),
+          Err(_) => ()
+        }
       }
     }
     self.parse_command_buffer();
 
     if self.running { 
       self.update_inputs();
-      match self.update_server() {
-        Ok(_) => (),
-        Err(e) => self.view.writeln(format!("{}", e))
+      if let Err(e) = self.update_server() {
+        self.view.writeln(format!("{}", e));
       }
     }
   }
@@ -211,7 +245,10 @@ impl ClientController {
     }
   }
 
-  pub fn cleanup(&mut self) -> Result<String, String> {
+  fn cleanup(&mut self) -> Result<String, String> {
+    self.view.writeln(
+      "Cleaning up connected gamepads... This will take a moment.".to_string()
+    );
     self.input_map.clear();
     return self.model.cleanup();
   }
@@ -331,7 +368,7 @@ impl ClientController {
     );
   }
 
-  pub fn parse_command_buffer(&mut self) -> () {
+  fn parse_command_buffer(&mut self) -> () {
     while let Some(command) = self.view.get_command_buffer().pop() {
       let parts: Vec<&str> = command.split(" ").collect::<Vec<&str>>();
       match self.parse_command(&parts[0], &parts[1..]) {
@@ -341,10 +378,109 @@ impl ClientController {
     }
   }
 
+  fn help(&self, command: Option<&str>) -> Result<String, String> {
+    return match command {
+      None => Ok(
+        "\n
+        help (command): Provides a list of available commands. You can specify \
+        a command after 'help' to view its full usage info.
+        \n
+        restart: Restarts the client. The client must be running.
+        \n
+        start: Starts the client.
+        \n
+        stop: Stops the client and disconnects all connected gamepads.
+        \n
+        exit: Same as 'stop', but totally exits the application.
+        \n
+        set_server_ip 'server_ip': \
+        Sets the server IP to whatever 'server_ip' is. Use 'help set_server_ip \
+        ' for full usage info.
+        \n
+        set_switch_pad 'i' 'switch_pad': \
+        Sets the Switch controller type of the gamepad at slot ('i' + 1). Use \
+        'help set_switch_pad' for full usage info.
+        \n
+        set_input_delay 'i' 'input_delay': \
+        Sets the input delay of the gamepad at slot ('i' + 1). Use 'help \
+        set_input_delay' for full usage info."
+        .to_string()
+      ),
+      Some(keyword) => {
+        match keyword {
+          "help" => Ok(
+            "\n
+            Usage: help (command)
+            \n
+            (command) can be the name of any command.
+            \n
+            Example, if you want to see the usage of 'set_server_ip':
+            \n
+            help set_server_ip"
+            .to_string()
+          ),
+          "restart" => Ok("\nUsage: restart".to_string()),
+          "start" => Ok("\nUsage: start".to_string()),
+          "stop" => Ok("\nUsage: stop".to_string()),
+          "exit" => Ok("\nUsage: exit".to_string()),
+          "set_server_ip" => Ok(
+            "\n
+            Usage: set_server_ip 'server_ip'
+            \n
+            Example, if your Switch's IP is 192.168.1.199:
+            \n
+            set_server_ip 192.168.1.199"
+            .to_string()
+          ),
+          "set_switch_pad" => Ok(
+            "\n
+            Usage: set_switch_pad 'i' 'switch_pad'
+            \n
+            'i' must be either 0 or a positive integer. It also represents the \
+            target index: slot numbers are always equal to 'i' + 1.
+            \n
+            switch_pad must be one of: Disconnected, ProController, \
+            JoyConLSide, or JoyConRSide.
+            \n
+            Example, if you want to set the controller in slot 2 to a sideways \
+            left JoyCon:
+            \n
+            set_switch_pad 1 JoyConLSide"
+            .to_string()
+          ),
+          "set_input_delay" => Ok(
+            "\n
+            Usage: set_input_delay 'i' 'input_delay'
+            \n
+            'i' must be either 0 or a positive integer. It also represents the \
+            target index: slot numbers are always equal to 'i' + 1.
+            \n
+            'input_delay' must be either 0 or a positive integer less than 256.
+            \n
+            Example, if you want to set the input delay of the controller in \
+            slot 3 to 6 frames:
+            \n
+            set_input_delay 2 6"
+            .to_string()
+          ),
+          _ => Err(format!("'{}' is not a valid command.", keyword))
+        }
+      }
+    }
+  }
+
   fn parse_command(
     &mut self, keyword: &str, args: &[&str]
   ) -> Result<String, String> {
     return match keyword {
+      "help" => {
+        if args.len() >= 1 {
+          return self.help(Some(args[0]));
+        } else {
+          return self.help(None);
+        }
+      },
+      "restart" => self.restart(),
       "start" => self.start(),
       "stop" => self.stop(),
       "exit" => self.exit(),
@@ -352,13 +488,7 @@ impl ClientController {
         if args.len() >= 1 {
           return self.set_server_ip(&args[0].to_string());
         } else {
-          return Err(
-            "Usage: set_server_ip server_ip\n
-            \n
-            Example, if your Switch's IP is 192.168.1.199:\n
-            set_server_ip 192.168.1.199"
-            .to_string()
-          );
+          return Err(self.help(Some("set_server_ip")).unwrap());
         }
       },
       "set_switch_pad" => {
@@ -369,19 +499,7 @@ impl ClientController {
             }
           }
         }
-        return Err(
-          "Usage: set_switch_pad i switch_pad\n
-          \n
-          i must be either 0 or a positive integer. It also represents the \
-          target index: slot numbers are always equal to i + 1.\n
-          switch_pad must be one of: Disconnected, ProController, JoyConLSide, \
-          JoyConRSide.\n
-          \n
-          Example, if you want to set the controller in slot 2 to a sideways \
-          left JoyCon:\n
-          set_switch_pad 1 JoyConLSide"
-          .to_string()
-        );
+        return Err(self.help(Some("set_switch_pad")).unwrap());
       },
       "set_input_delay" => {
         if args.len() >= 2 {
@@ -391,20 +509,9 @@ impl ClientController {
             }
           }
         }
-        return Err(
-          "Usage: set_input_delay i input_delay\n
-          \n
-          i must be either 0 or a positive integer. It also represents the \
-          target index: slot numbers are always equal to i + 1.\n
-          input_delay must be either 0 or a positive integer less than 256.\n
-          \n
-          Example, if you want to set the input delay of the controller in \
-          slot 3 to 6 frames:\n
-          set_input_delay 2 6"
-          .to_string()
-        );
+        return Err(self.help(Some("set_input_delay")).unwrap());
       },
-      _ => Err(format!("{} is not a valid command.", keyword))
+      _ => Err(format!("'{}' is not a valid command.", keyword))
     }
   }
 }

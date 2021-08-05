@@ -8,13 +8,13 @@ PaskaPanishkes. You can find its repo at:
 sys-hidplus is a sysmodule for a Nintendo Switch hacked to run custom firmware.
 This sysmodule allows the Switch to receive controller inputs sent by a computer
 using a client. This in turn enables users to use normally unsupported
-controllers - such as an Xbox or PS4 controller. This can be used alongside a
-remote game streaming service such as Parsec to allow people play Switch games
+controllers - such as an Xbox or PS4 controller. This can also be used alongside
+a remote game streaming service such as Parsec to allow people play Switch games
 from practically anywhere.
 
 This premise is what attracted me to help contribute to Pask's work, so I ended
 up wanting to rewrite and refactor their original input client, written in
-Python.
+Python. Pask is aware of this client and is fine with its development.
 
 # Foreword
 While Pask has also rewritten their original client using C# - which features a
@@ -22,17 +22,19 @@ GUI unlike mine,
 [check it out](https://github.com/PaskaPinishkes/SwitchSysHidplusClient)! -
 they suspect it may only work for Windows. I intend to continue working on this
 client to support Macs and Linux machines. I also want to use this opportunity
-as a learning experience and an outlet to implement more experimental functions.
-As such, keep in mind that this client may have different features from Pask's
-client, which may or may not be cross-platform-friendly.
+as a learning experience and an outlet to implement more experimental
+functionality.  As such, keep in mind that this client will likely have
+different features from Pask's client, which may or may not be
+cross-platform-friendly.
 
 For both Pask and I's convenience - so we can bounce ideas off each other -
 here's some of the differences my client has (that come to mind):
 - Is a command line application.
-- Settings are done from a single configuration file.
+- Settings are done from a single configuration file, but can be edited even
+  through the client itself.
 - Users press a button (right bumper) to assign their controller to a slot.
 - Controllers are cleaned up and disconnected from the Switch when the client is
-  closed.
+  stopped.
 - Uses SDL as an input library that supports 4+ controllers.
   - Keep in mind that this client cannot actually emulate 4+ controllers until
     sys-hidplus is updated to do the same. It's just that the framework for it
@@ -72,37 +74,46 @@ following:
 client-rs
 ```
 
-Either method should bring up a message and generate a file called `config.toml`
-within your current directory. Open it using your favorite text editor. You
-should see something like this:
-```
-server_ip = ''
-switch_pad_1 = 'ProController'
-switch_pad_2 = 'ProController'
-switch_pad_3 = 'ProController'
-switch_pad_4 = 'ProController'
-...
-```
-Between the single quotes next to `server_ip`, type out your Switch's IP
-address. For example, if its IP were 192.168.1.199, the `server_ip` line should
-look like this:
-```
-server_ip = '192.168.1.199'
-```
-Rerun the client, and you'll find that there should be a "Ready" message this
-time. If the client hasn't exited at this point, this means your client is ready
-to connect controllers to your Switch.
+Either method should give you a welcome message. You'll find that typing `start`
+will notify you that you'll have to set a server IP first. You can set it by
+using the command `set_server_ip 'server_ip'`, where 'server_ip' is replaced
+with the IP of the Switch you want to connect to. You can also edit
+`config.toml`, which is generated within your current directory, but you can
+generally edit all its fields through commands.
+
+After you've set your Switch's IP, you can type `start` again to start the
+client. You'll find that the client should be ready to connect controllers to
+your Switch.
 
 ## Additional Configuration
-You can change any of the `switch_pad_x` values (where `x` is a number) to any
-one of the following:
+The client offers additional configuration, such as changing a slot's controller
+type and input delay - input delay in particular is helpful for giving a host
+lag to match their clients.
+
+You can change a slot's controller type using `set_switch_pad 'i' 'switch_pad'`.
+'i' represents the "index" of the slot you want to change, and 'switch_pad' is
+any one of the following:
 ```
+Disconnected
 ProController
 JoyConLSide
 JoyConRSide
 ```
-Be sure to surround the value in single quotes though, just like the original
-configuration.
+The "index" is just the slot # - 1. For example, if you wanted to change a
+controller in slot 2 to a sideways left JoyCon, run
+`set_switch_pad 1 JoyConLSide`.
+If you run this while the client is running, you may have to restart it (you can
+type `restart`) for the changes to take effect. For more information on this,
+you can use `help set_switch_pad`.
+
+In a similar way, you can change a slot's input delay using
+`set_input_delay 'i' 'input_delay'`.
+'input_delay' must be a positive number. Unlike `set_switch_pad` though, you
+don't need to restart the client for the changes to work. For more information
+on this, you can use `help set_input_delay`.
+
+Alternatively, you can edit `config.toml` too. Just be sure to follow the
+existing format.
 
 ## Connecting Controllers
 Plug into your computer the controllers you want to use on your Switch. If
@@ -114,6 +125,7 @@ When you want to activate a controller, press your right bumper:
 - On PlayStation controllers, this will be R1.
 - On Switch controllers, this will be R.
 - On GameCube controllers, this will be Z assuming you have Delfinovin setup.
+- On any other controllers, you get the point.
 
 Activating a controller will assign it to the first available slot, and will not
 override slots that are already connected. You may have to make a few button
@@ -128,11 +140,12 @@ reconnect your controller and reactivate it at any time.
 
 ## Closing the Client
 **This is a pretty important step if you want to cleanly disconnect your
-controllers**. Focus or click on the terminal/shell with your client open. Press
-Ctrl + C (on Mac this might be Command + C). You should see a message where the
-client is cleaning up the controllers. After about 3 seconds, you should see
-another message telling you that the cleanup's done. Feel free to close your
-terminal/shell after this point.
+controllers**. You can run `stop` if you want to stop the client without closing
+it. You should see a message where the client is cleaning up the controllers.
+After about 3 seconds, you should see another message telling you that the
+cleanup's done. You'll have to run `exit` to completely close the client.
+Alternatively, you can run `exit` while the client is still running to stop then
+close the client. Feel free to close your terminal/shell after this point.
 
 # Compiling
 This section assumes that you have Rust installed on your computer, preferably
@@ -143,20 +156,32 @@ Compiling should be as simple as navigating to this repo's directory and running
 `target/debug`.
 
 Alternatively, you can run (and build) by running `cargo run`. Running the
-client otherwise follows the same steps as **Download and Usage**.
+client otherwise follows the same steps as **Download and Usage**, minus the
+download part of course.
 
 # Known Issues
+- sys-hidplus is known to have input delay in demanding games. I don't have any
+  games to personally test this with, but initial obstacles in development seem
+  to support this; namely, input delay was present when inputs were sent at a
+  much higher frequency than the frame rate.
 - If a controller is forcibly disconnected by the Switch - like through the
   "Change Grip/Order" menu or the "Disconnect" button in Smash Ultimate - **you
-  cannot reconnect it until you restart your Switch**. It's possible a future
-  sys-hidplus update can resolve this, but until then, try to avoid any menus
-  and options that forcibly disconnect controllers (if possible).
+  cannot reconnect it until you restart your Switch**. I'm also told that you
+  can restart Parsec (if any of the affected controllers were through Parsec),
+  but I'm not totally sure. Either way, it's possible a future sys-hidplus 
+  update can resolve this, but until then, try to avoid any menus and options
+  that forcibly disconnect controllers (if you can).
 - As of an unofficial build for sys-hidplus (for 12.x support), sideways Joy-Con
   emulation doesn't seem to work properly. That said, this has yet to be tested
   in games that use sideways Joy-Cons, so feel free to try it out.
+- Using arrow keys in the command line interface messes up the next few
+  commands. Not entirely sure how to fix this. For now, try to avoid using any
+  arrow keys and if you do, try to move your cursor all the way to the last
+  line.
 
 # Contact
-If you want to contact me, you can reach me at Kenesu#2586 on Discord.
+If you want to contact me, you can reach me at Kenesu#2586 on Discord or
+kenesu_h on GBATemp.
 
 # Credits
 Credits go to PaskaPinishes for sys-hidplus (and the associated client) as a

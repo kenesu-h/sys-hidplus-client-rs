@@ -102,10 +102,12 @@ impl ClientModel {
       &PackedData::new(&self.pads, 4).to_bytes(),
       format!("{}:8000", self.server_ip)
     ) {
+      Ok(_) => Ok(()),
       Err(e) => return Err(
-        format!("The following error occurred: {}.", e)
-      ),
-      Ok(_) => Ok(())
+        format!( 
+          "The following error occurred while updating the server: {}.", e
+        )
+      )
     }
   }
 
@@ -120,8 +122,10 @@ impl ClientModel {
    * unstable.
    */
   pub fn cleanup(&mut self) -> Result<String, String> {
-    println!("Cleaning up connected gamepads... This will take a moment.");
-    self.pads = c![EmulatedPad::new(), for _i in 0..4];
+    for pad in &mut self.pads {
+      pad.disconnect();
+    }
+    // self.pads = c![EmulatedPad::new(), for _i in 0..4];
     let start: time::Instant = time::Instant::now();
     while start.elapsed().as_millis() < 3000 {
       match self.sock.send_to(
