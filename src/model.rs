@@ -52,7 +52,7 @@ impl ClientModel {
     return match UdpSocket::bind("0.0.0.0:8000") {
       Ok(sock) => Ok(
         ClientModel {
-          server_ip: config.get_server_ip().to_string(),
+          server_ip: "".to_string(),
           sock: sock,
           pads: c![EmulatedPad::new(), for _i in 0..4]
         }

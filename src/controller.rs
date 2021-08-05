@@ -1,6 +1,7 @@
 use crate::{
   config::Config,
   model::ClientModel,
+  view::common::ClientView,
   input::{
     adapter::common::{
       InputButton,
@@ -21,36 +22,51 @@ use std::{
   str::FromStr
 };
 
-pub struct InputController {
+pub struct ClientController {
   switch_pads: Vec<SwitchPad>,
   input_delays: Vec<u8>,
 
   model: ClientModel,
+  view: Box<dyn ClientView>,
   running: bool,
 
   input_adapter: Box<dyn InputAdapter>,
   input_map: HashMap<usize, usize>,
   input_buffer: Vec<(InputEvent, u8)>,
-
-  command_buffer: Vec<String>
 }
 
-impl InputController {
+impl ClientController {
   pub fn new(
-    model: ClientModel, input_adapter: Box<dyn InputAdapter>
-  ) -> InputController {
-    return InputController {
+    model: ClientModel, view: Box<dyn ClientView>,
+    input_adapter: Box<dyn InputAdapter>
+  ) -> ClientController {
+    return ClientController {
       switch_pads: vec!(),
       input_delays: vec!(),
 
       model: model,
+      view: view,
       running: false,
 
       input_adapter: input_adapter,
       input_map: HashMap::new(),
-      input_buffer: vec!(),
+      input_buffer: vec!()
+    }
+  }
 
-      command_buffer: vec!()
+  pub fn initialize(&mut self) -> Result<(), String> {
+    return match self.load_config() {
+      Ok(msg) => {
+        self.view.writeln(msg);
+        self.view.writeln(
+          "Welcome to sys-hidplus-client-rs! Type 'start' to begin the client \
+          or 'exit' to close it. Type 'help' for a list of all available \
+          commands."
+          .to_string()
+        );
+        return Ok(());
+      },
+      Err(e) => Err(e)
     }
   }
 
@@ -110,7 +126,7 @@ impl InputController {
     );
   }
 
-  pub fn start(&mut self) -> Result<String, String> {
+  fn start(&mut self) -> Result<String, String> {
     if self.model.get_server_ip().is_empty() {
       return Err(
         "The server_ip field in config.toml is empty! If this is your first \
@@ -127,7 +143,7 @@ impl InputController {
     }
   }
 
-  pub fn stop(&mut self) -> Result<String, String> {
+  fn stop(&mut self) -> Result<String, String> {
     if self.running {
       self.running = false;
       match self.cleanup() {
@@ -139,15 +155,34 @@ impl InputController {
     }
   }
 
-  pub fn exit(&mut self) -> Result<String, String> {
+  fn exit(&mut self) -> Result<String, String> {
     if self.running {
-      return self.stop();
+      match self.stop() {
+        Ok(_) => process::exit(0),
+        Err(_) => process::exit(1)
+      }
+    } else {
+      process::exit(0);
     }
-    return Ok("It's okay to exit now.".to_string());
   }
 
   pub fn update(&mut self) -> () {
-    self.update_inputs();
+    match self.view.update() {
+      Ok(_) => (),
+      Err(e) => {
+        println!("{}", e);
+        self.exit();
+      }
+    }
+    self.parse_command_buffer();
+
+    if self.running { 
+      self.update_inputs();
+      match self.update_server() {
+        Ok(_) => (),
+        Err(e) => self.view.writeln(format!("{}", e))
+      }
+    }
   }
 
   fn update_inputs(&mut self) -> () {
@@ -156,7 +191,7 @@ impl InputController {
     self.parse_input_buffer();
   }
 
-  fn update_server(&mut self) -> Result<(), Vec<String>> {
+  fn update_server(&mut self) -> Result<(), String> {
     let mut errors: Vec<String> = vec!();
     match self.model.update_server() {
       Ok(msg) => return Ok(msg),
@@ -167,7 +202,7 @@ impl InputController {
         }
         return Err(
           format!(
-            "Received the following errors while attempting to update then \
+            "Received the following errors while attempting to update and \
             cleanup the server: {:?}",
             errors
           )
@@ -177,6 +212,7 @@ impl InputController {
   }
 
   pub fn cleanup(&mut self) -> Result<String, String> {
+    self.input_map.clear();
     return self.model.cleanup();
   }
 
@@ -184,8 +220,8 @@ impl InputController {
     for (gamepad_id, _) in self.input_map.clone() {
       if !self.input_adapter.is_connected(&gamepad_id) {
         match self.disconnect(&gamepad_id) {
-          Ok(msg) => println!("{}", msg),
-          Err(e) => println!("{}", e)
+          Ok(msg) => self.view.writeln(format!("{}", msg)),
+          Err(e) => self.view.writeln(format!("{}", e))
         }
       }
     }
@@ -244,8 +280,8 @@ impl InputController {
           if let InputEvent::GamepadButton(gamepad_id, button, value) = event {
             if button == InputButton::RightBumper && value == 1.0 {
               match self.connect(&gamepad_id) {
-                Ok(msg) => println!("{}", msg),
-                Err(e) => println!("{}", e)
+                Ok(msg) => self.view.writeln(format!("{}", msg)),
+                Err(e) => self.view.writeln(format!("{}", e))
               }
             }
           }
@@ -296,11 +332,11 @@ impl InputController {
   }
 
   pub fn parse_command_buffer(&mut self) -> () {
-    while let Some(command) = self.command_buffer.pop() {
+    while let Some(command) = self.view.get_command_buffer().pop() {
       let parts: Vec<&str> = command.split(" ").collect::<Vec<&str>>();
       match self.parse_command(&parts[0], &parts[1..]) {
-        Ok(_) => (),
-        Err(e) => println!("{}", e)
+        Ok(msg) => self.view.writeln(format!("{}", msg)),
+        Err(e) => self.view.writeln(format!("{}", e))
       }
     }
   }
@@ -309,8 +345,8 @@ impl InputController {
     &mut self, keyword: &str, args: &[&str]
   ) -> Result<String, String> {
     return match keyword {
-      "start" => return self.start(),
-      "stop" => return self.stop(),
+      "start" => self.start(),
+      "stop" => self.stop(),
       "exit" => self.exit(),
       "set_server_ip" => {
         if args.len() >= 1 {
