@@ -48,6 +48,7 @@ Here's some of the differences that Pask's client has to my knowledge:
 # Download and Usage
 Download the latest version of the client from
 [the releases page](https://github.com/kenesu-h/sys-hidplus-client-rs/releases).
+Extract it into a folder; preferably one dedicated to the client.
 
 This client supports Windows, Mac OS X, and GNU/Linux, although support for the
 latter two have not been tested since I lack machines for both. You may have to
