@@ -67,11 +67,17 @@ If you're using `cmd` to run the client, run the following:
 client-rs.exe
 ```
 
-### Windows - PowerShell (or other Unix-like shells), Mac, Linux
-If you're using PowerShell (or other Unix-like shells), Mac, or Linux, run the
-following:
+### Windows - PowerShell (or other Unix-like shells),
+If you're using PowerShell (or other Unix-like shells) - such as cygwin - run
+the following:
 ```
-client-rs
+./client-rs.exe
+```
+
+### Mac OS X and Linux
+Open your OS's terminal/shell and run the following:
+```
+./client-rs
 ```
 
 Either method should give you a welcome message. You'll find that typing `start`
