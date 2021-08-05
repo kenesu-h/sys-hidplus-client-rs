@@ -1,6 +1,6 @@
 [package]
 name = "client-rs"
-version = "1.0.0"
+version = "1.0.0-beta.0"
 authors = ["Kenneth <Kenneth@DESKTOP-VHTOUHH>"]
 edition = "2018"
 
