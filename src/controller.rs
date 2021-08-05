@@ -164,7 +164,10 @@ impl ClientController {
     if self.model.get_server_ip().is_empty() {
       return Err(
         "The server_ip field in config.toml is empty! If this is your first \
-        time running the client, please set it to the IP of your Switch."
+        time running the client, please set it to the IP of your Switch. You \
+        can use 'set_server_ip `server_ip`', where `server_ip` is replaced with
+        your Switch's IP. Be sure not to include the single quotes too. If you
+        need an example, type 'help set_server_ip'."
         .to_string()
       );
     } else {
