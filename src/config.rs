@@ -28,8 +28,8 @@ impl Default for Config {
   fn default() -> Config {
     return Config {
       server_ip: "".to_string(),
-      switch_pads: c!(SwitchPad::ProController, for _i in 0..4),
-      input_delays: c!(0, for _i in 0..4)
+      switch_pads: c!(SwitchPad::ProController, for _i in 0..8),
+      input_delays: c!(0, for _i in 0..8)
       /*
       switch_pad_1: Some(SwitchPad::ProController),
       input_delay_1: 0,

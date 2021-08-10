@@ -37,7 +37,7 @@ impl ClientModel {
         ClientModel {
           server_ip: "".to_string(),
           sock: sock,
-          pads: c![EmulatedPad::new(), for _i in 0..4]
+          pads: c![EmulatedPad::new(), for _i in 0..8]
         }
       ),
       Err(e) => Err(format!("{}", e))
@@ -87,7 +87,7 @@ impl ClientModel {
   // Sends the current emulated pad states to the input server.
   pub fn update_server(&self) -> Result<(), String> {
     match self.sock.send_to(
-      &PackedData::new(&self.pads, 4).to_bytes(),
+      &PackedData::new(&self.pads, 8).to_bytes(),
       format!("{}:8000", self.server_ip)
     ) {
       Ok(_) => Ok(()),
@@ -114,7 +114,7 @@ impl ClientModel {
     let start: time::Instant = time::Instant::now();
     while start.elapsed().as_millis() < 3000 {
       match self.sock.send_to(
-        &PackedData::new(&self.pads, 4).to_bytes(),
+        &PackedData::new(&self.pads, 8).to_bytes(),
         format!("{}:8000", self.server_ip)
       ) {
         Err(e) => return Err(e.to_string()),
@@ -162,6 +162,34 @@ pub struct PackedData {
   joy_l_y4: i32,
   joy_r_x4: i32,
   joy_r_y4: i32,
+
+  con_type5: u16,
+  keys5: u64,
+  joy_l_x5: i32,
+  joy_l_y5: i32,
+  joy_r_x5: i32,
+  joy_r_y5: i32,
+
+  con_type6: u16,
+  keys6: u64,
+  joy_l_x6: i32,
+  joy_l_y6: i32,
+  joy_r_x6: i32,
+  joy_r_y6: i32,
+
+  con_type7: u16,
+  keys7: u64,
+  joy_l_x7: i32,
+  joy_l_y7: i32,
+  joy_r_x7: i32,
+  joy_r_y7: i32,
+
+  con_type8: u16,
+  keys8: u64,
+  joy_l_x8: i32,
+  joy_l_y8: i32,
+  joy_r_x8: i32,
+  joy_r_y8: i32,
 }
 
 // Maps a switch pad (or lack thereof) to its integer counterpart.
@@ -208,6 +236,34 @@ impl PackedData {
       joy_l_y4: pads[3].get_left().1,
       joy_r_x4: pads[3].get_right().0,
       joy_r_y4: pads[3].get_right().1,
+
+      con_type5: to_switch_pad_value(pads[4].get_switch_pad()) as u16,
+      keys5: *pads[4].get_keyout() as u64,
+      joy_l_x5: pads[4].get_left().0,
+      joy_l_y5: pads[4].get_left().1,
+      joy_r_x5: pads[4].get_right().0,
+      joy_r_y5: pads[4].get_right().1,
+
+      con_type6: to_switch_pad_value(pads[5].get_switch_pad()) as u16,
+      keys6: *pads[5].get_keyout() as u64,
+      joy_l_x6: pads[5].get_left().0,
+      joy_l_y6: pads[5].get_left().1,
+      joy_r_x6: pads[5].get_right().0,
+      joy_r_y6: pads[5].get_right().1,
+
+      con_type7: to_switch_pad_value(pads[6].get_switch_pad()) as u16,
+      keys7: *pads[6].get_keyout() as u64,
+      joy_l_x7: pads[6].get_left().0,
+      joy_l_y7: pads[6].get_left().1,
+      joy_r_x7: pads[6].get_right().0,
+      joy_r_y7: pads[6].get_right().1,
+
+      con_type8: to_switch_pad_value(pads[7].get_switch_pad()) as u16,
+      keys8: *pads[7].get_keyout() as u64,
+      joy_l_x8: pads[7].get_left().0,
+      joy_l_y8: pads[7].get_left().1,
+      joy_r_x8: pads[7].get_right().0,
+      joy_r_y8: pads[7].get_right().1,
     }
   }
 
@@ -218,7 +274,7 @@ impl PackedData {
      * Q - Keyout
      * i - Stick Info 
      */
-    structure!("<HHHQiiiiHQiiiiHQiiiiHQiiii").pack(
+    structure!("<HHHQiiiiHQiiiiHQiiiiHQiiiiHQiiiiHQiiiiHQiiiiHQiiii").pack(
       self.magic,
       self.connected,
 
@@ -249,6 +305,34 @@ impl PackedData {
       self.joy_l_y4,
       self.joy_r_x4,
       self.joy_r_y4,
+
+      self.con_type5,
+      self.keys5,
+      self.joy_l_x5,
+      self.joy_l_y5,
+      self.joy_r_x5,
+      self.joy_r_y5,
+
+      self.con_type6,
+      self.keys6,
+      self.joy_l_x6,
+      self.joy_l_y6,
+      self.joy_r_x6,
+      self.joy_r_y6,
+
+      self.con_type7,
+      self.keys7,
+      self.joy_l_x7,
+      self.joy_l_y7,
+      self.joy_r_x7,
+      self.joy_r_y7,
+
+      self.con_type8,
+      self.keys8,
+      self.joy_l_x8,
+      self.joy_l_y8,
+      self.joy_r_x8,
+      self.joy_r_y8
     ).unwrap()
   }
 }
