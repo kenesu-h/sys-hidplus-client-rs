@@ -20,7 +20,12 @@ use sdl2::{
   },
   VideoSubsystem
 };
-use std::collections::HashMap;
+use std::{
+  collections::HashMap,
+  panic,
+  panic::AssertUnwindSafe
+};
+extern crate std;
 
 /**
  * Representing a cross-platform input adapter that will read from an SDL
@@ -192,45 +197,60 @@ impl SdlAdapter {
 impl InputAdapter for SdlAdapter {
   fn read(&mut self) -> Vec<InputEvent> {
     let mut events: Vec<InputEvent> = vec!();
-    while let Some(event) = self.event_pump.poll_event() {
-      match event { 
-        Event::ControllerDeviceAdded { which, .. } => {
-          // We need to store the gamepad somewhere to receive button events.
-          let gamepad: GameController = self.game_controller.open(which)
-            .unwrap();
-          self.gamepads.insert(gamepad.instance_id(), gamepad);
+
+    /* Disable the panic hook so we ignore panics from pressing an unmapped
+     * button. We can't do much else until rust-sdl2 fixes this.
+     */
+    let prev_hook = panic::take_hook();
+    panic::set_hook(Box::new(|_| {}));
+    loop {
+      match panic::catch_unwind(
+        AssertUnwindSafe(|| { self.event_pump.poll_event() })
+      ) {
+        Ok(polled) => match polled {
+          Some(event) =>  match event { 
+            Event::ControllerDeviceAdded { which, .. } => {
+              // We need to store the gamepad somewhere to receive button events.
+              let gamepad: GameController = self.game_controller.open(which)
+                .unwrap();
+              self.gamepads.insert(gamepad.instance_id(), gamepad);
+            },
+            Event::ControllerDeviceRemoved { which, .. } => {
+              self.gamepads.remove(&which);
+            },
+            Event::ControllerAxisMotion { timestamp: _, which, axis, value } => {
+              if self.is_trigger(&axis) {
+                match self.to_trigger_event(&which, &axis, &value) {
+                  Ok(adapted) => events.push(adapted),
+                  Err(_) => ()
+                }
+              } else {
+                match self.to_axis_event(&which, &axis, &value) {
+                  Ok(adapted) => events.push(adapted),
+                  Err(_) => ()
+                }
+              }
+            },
+            Event::ControllerButtonDown { timestamp: _, which, button } => {
+              match self.to_button_event(&which, &button, true) {
+                Ok(adapted) => events.push(adapted),
+                Err(_) => ()
+              }
+            },
+            Event::ControllerButtonUp {timestamp: _, which, button } => {
+              match self.to_button_event(&which, &button, false) {
+                Ok(adapted) => events.push(adapted),
+                Err(_) => ()
+              }
+            },
+            _ => ()
+          },
+          None => break
         },
-        Event::ControllerDeviceRemoved { which, .. } => {
-          self.gamepads.remove(&which);
-        },
-        Event::ControllerAxisMotion { timestamp: _, which, axis, value } => {
-          if self.is_trigger(&axis) {
-            match self.to_trigger_event(&which, &axis, &value) {
-              Ok(adapted) => events.push(adapted),
-              Err(_) => ()
-            }
-          } else {
-            match self.to_axis_event(&which, &axis, &value) {
-              Ok(adapted) => events.push(adapted),
-              Err(_) => ()
-            }
-          }
-        },
-        Event::ControllerButtonDown { timestamp: _, which, button } => {
-          match self.to_button_event(&which, &button, true) {
-            Ok(adapted) => events.push(adapted),
-            Err(_) => ()
-          }
-        },
-        Event::ControllerButtonUp {timestamp: _, which, button } => {
-          match self.to_button_event(&which, &button, false) {
-            Ok(adapted) => events.push(adapted),
-            Err(_) => ()
-          }
-        },
-        _ => ()
+        Err(_) => ()
       }
     }
+    panic::set_hook(prev_hook); 
     return events;
   }
   
