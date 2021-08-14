@@ -102,7 +102,10 @@ impl SwitchButton {
       InputButton::DPadRight => Ok(Self::DR),
       InputButton::DPadDown => Ok(Self::DD),
       InputButton::DPadLeft => Ok(Self::DL),
-      
+     
+      InputButton::LeftStick => Ok(Self::LST),
+      InputButton::RightStick => Ok(Self::RST),
+
       InputButton::LeftBumper => Ok(Self::L),
       InputButton::RightBumper => Ok(Self::R),
       // TODO: It may be worth changing these to SLL/SLR/SRL/SRR.

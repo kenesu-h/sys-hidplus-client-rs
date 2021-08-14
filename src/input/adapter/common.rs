@@ -11,6 +11,8 @@ pub enum InputButton {
   RightTrigger,
   Start,
   Select,
+  LeftStick,
+  RightStick,
   DPadUp,
   DPadDown,
   DPadLeft,
