@@ -39,6 +39,8 @@ pub struct ClientController {
   input_adapter: Box<dyn InputAdapter>,
   input_map: HashMap<usize, usize>,
   input_buffer: Vec<(InputEvent, u8)>,
+
+  command_buffer: Vec<String>
 }
 
 impl ClientController {
@@ -61,7 +63,9 @@ impl ClientController {
 
       input_adapter: input_adapter,
       input_map: HashMap::new(),
-      input_buffer: vec!()
+      input_buffer: vec!(),
+
+      command_buffer: vec!()
     }
   } 
 
@@ -93,9 +97,10 @@ impl ClientController {
    * Initializes this controller with a greeting message, and by loading a
    * config.
    */
-  pub fn initialize(&mut self) -> Result<(), String> {
+  pub fn initialize(&mut self) -> Result<String, String> {
     return match self.load_config() {
       Ok(msg) => {
+        self.view.initialize();
         self.view.writeln(msg);
         self.view.writeln(
           "Welcome to sys-hidplus-client-rs! Type 'start' to begin the client \
@@ -103,7 +108,7 @@ impl ClientController {
           commands."
           .to_string()
         );
-        return Ok(());
+        return Ok("Welcome to sys-hidplus-client-rs!".to_owned());
       },
       Err(e) => Err(e)
     }
@@ -160,7 +165,7 @@ impl ClientController {
   }
 
   // Starts the client if it's not running yet.
-  fn start(&mut self) -> Result<String, String> {
+  pub fn start(&mut self) -> Result<String, String> {
     if self.model.get_server_ip().is_empty() {
       return Err(
         "The server_ip field in config.toml is empty! If this is your first \
@@ -181,7 +186,7 @@ impl ClientController {
   }
 
   // Stops the client if it's currently running.
-  fn stop(&mut self) -> Result<String, String> {
+  pub fn stop(&mut self) -> Result<String, String> {
     if self.running {
       self.running = false;
       match self.cleanup() {
@@ -203,7 +208,7 @@ impl ClientController {
   }
 
   // Exits the client, which is effectively stopping then process::exit().
-  fn exit(&mut self) -> Result<String, String> {
+  pub fn exit(&mut self) -> Result<String, String> {
     if self.running {
       return match self.stop() {
         Ok(_) => self.exit_ok(),
@@ -401,6 +406,17 @@ impl ClientController {
         "Couldn't connect gamepad (id: {}) since no slots are available.",
         gamepad_id
       )
+    );
+  }
+
+  pub fn push_command_buffer(&mut self, command: String) -> () {
+    self.command_buffer.insert(
+      0,
+      command
+      .strip_suffix("\r\n")
+      .or(command.strip_suffix("\n"))
+      .unwrap_or(&command)
+      .to_owned()
     );
   }
 

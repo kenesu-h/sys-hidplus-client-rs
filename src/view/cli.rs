@@ -50,6 +50,10 @@ fn spawn_stdin_channel() -> Receiver<String> {
 }
 
 impl ClientView for CLIView {
+  fn initialize(&mut self) -> Result<(), ()> {
+    return Ok(());
+  }
+
   fn update(&mut self) -> Result<(), String> {
     return match self.receiver.try_recv() {
       Ok(command) => {

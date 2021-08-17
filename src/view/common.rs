@@ -1,4 +1,6 @@
 pub trait ClientView {
+  fn initialize(&mut self) -> Result<(), ()>;
+
   /**
    * Updates this view.
    *
