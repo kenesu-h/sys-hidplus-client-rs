@@ -70,7 +70,7 @@ impl SdlAdapter {
   fn to_button_event(
     &self, which: &u32, button: &Button, pressed: bool
   ) -> Result<InputEvent, String> {
-    return match self.to_button(button) {
+    return match self.to_button(which, button) {
       Ok(mapped) => Ok(
         InputEvent::GamepadButton(
           *which as usize,
@@ -91,12 +91,36 @@ impl SdlAdapter {
   }
 
   // Maps an SDL button to an InputButton.
-  fn to_button(&self, button: &Button) -> Result<InputButton, String> {
+  fn to_button(&self, which: &u32, button: &Button) -> Result<InputButton, String> {
     return match button {
-      Button::A => Ok(InputButton::South),
-      Button::B => Ok(InputButton::East),
-      Button::X => Ok(InputButton::North),
-      Button::Y => Ok(InputButton::West),
+      Button::A => match self.game_controller.name_for_index(*which) {
+        Ok(name) => match name.as_str() {
+          "Nintendo Switch Pro Controller" => Ok(InputButton::East),
+          _ => Ok(InputButton::South)
+        },
+        Err(_) => Err(String::from("Couldn't get controller name from index."))
+      },
+      Button::B => match self.game_controller.name_for_index(*which) {
+        Ok(name) => match name.as_str() {
+          "Nintendo Switch Pro Controller" => Ok(InputButton::South),
+          _ => Ok(InputButton::East)
+        },
+        Err(_) => Err(String::from("Couldn't get controller name from index."))
+      },
+      Button::X => match self.game_controller.name_for_index(*which) {
+        Ok(name) => match name.as_str() {
+          "Nintendo Switch Pro Controller" => Ok(InputButton::North),
+          _ => Ok(InputButton::West)
+        },
+        Err(_) => Err(String::from("Couldn't get controller name from index."))
+      },
+      Button::Y => match self.game_controller.name_for_index(*which) {
+        Ok(name) => match name.as_str() {
+          "Nintendo Switch Pro Controller" => Ok(InputButton::West),
+          _ => Ok(InputButton::North)
+        },
+        Err(_) => Err(String::from("Couldn't get controller name from index."))
+      },
       Button::Back => Ok(InputButton::Select),
       Button::Start => Ok(InputButton::Start),
       Button::LeftShoulder => Ok(InputButton::LeftBumper),
@@ -213,7 +237,8 @@ impl InputAdapter for SdlAdapter {
               // We need to store the gamepad somewhere to receive button events.
               let gamepad: GameController = self.game_controller.open(which)
                 .unwrap();
-              self.gamepads.insert(gamepad.instance_id(), gamepad);
+              println!("{}", &gamepad.name());
+              self.gamepads.insert(gamepad.instance_id(), gamepad); 
             },
             Event::ControllerDeviceRemoved { which, .. } => {
               self.gamepads.remove(&which);
