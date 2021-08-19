@@ -23,6 +23,7 @@ pub enum SwitchPad {
 }
 
 // Represents all the different buttons on a Switch controller.
+#[derive(Debug, PartialEq, EnumString)]
 pub enum SwitchButton {
   A,
   B,
@@ -151,6 +152,7 @@ impl SwitchButton {
  * through a map of buttons to booleans instead, but this is more true to the
  * original client and, in all honesty, is way more compact.
  */
+#[derive(Copy, Clone)]
 pub struct EmulatedPad {
   switch_pad: SwitchPad,
   keyout: i32,
@@ -207,6 +209,10 @@ impl EmulatedPad {
       },
       InputEvent::GamepadAxis(_, axis, value) => self.update_axis(axis, value)
     }
+  }
+
+  pub fn is_pressed(&self, button: &SwitchButton) -> bool {
+    return (&self.keyout & button.value()) != 0
   }
 
   // Updates this pad's keyout.

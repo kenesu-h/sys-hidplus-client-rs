@@ -5,7 +5,10 @@ use crate::{
       InputEvent,
       InputAdapter
     },
-    switch::SwitchPad
+    switch::{
+      SwitchPad,
+      EmulatedPad
+    }
   },
   config::Config,
   model::ClientModel,
@@ -331,6 +334,10 @@ impl ClientController {
         )
       );
     }
+  }
+
+  pub fn get_pads(&self) -> Vec<EmulatedPad> {
+    return self.model.get_pads();
   }
 
   // Fills the input buffer with events from the input adapter.

@@ -54,6 +54,10 @@ impl ClientModel {
     self.server_ip = server_ip.to_string();
   }
 
+  pub fn get_pads(&self) -> Vec<EmulatedPad> {
+    return self.pads.clone();
+  }
+
   // Returns the number of emulated gamepads in this model.
   pub fn num_pads(&self) -> usize {
     return self.pads.len();

@@ -1,9 +1,15 @@
 use crate::{
   app::{
     common::ClientApp,
-    iced::style
+    iced::{
+      style,
+      widget::GamepadDisplay
+    }
   },
-  input::adapter::sdl::SdlAdapter,
+  input::{
+    adapter::sdl::SdlAdapter,
+    switch::EmulatedPad
+  },
   model::ClientModel,
   controller::ClientController,
   view::cli::CLIView
@@ -179,11 +185,23 @@ impl Application for IcedApp {
       .height(Length::Fill)
       .padding(10);
 
-    main = main.push(
-      Text::new(
-        "Romani cum Albanis pugnant. Tres horatii Romae vivunt. Unus ex horatii, inter Albanos, inquit, sunt tres curiatii. Nos soli contra curiatios solos pugnare possumus."
-      )
-    );
+    let pads: Vec<EmulatedPad> = self.controller.get_pads();
+    let mut gamepad_rows: Column<ClientMessage> = Column::new()
+      .spacing(10);
+    let mut gamepad_row: Row<ClientMessage> = Row::new().spacing(10);
+    for i in 0..4 {
+      gamepad_row = gamepad_row.push(GamepadDisplay::new(self.theme, pads[i]));
+    }
+    let mut gamepad_row_2: Row<ClientMessage> = Row::new().spacing(10);
+    for i in 4..8 {
+      gamepad_row_2 = gamepad_row_2.push(GamepadDisplay::new(self.theme, pads[i]));
+    }
+
+    gamepad_rows = gamepad_rows
+      .push(gamepad_row)
+      .push(gamepad_row_2);
+
+    main = main.push(gamepad_rows);
 
     row = row.push(main);
 
