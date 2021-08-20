@@ -115,7 +115,6 @@ impl GamepadDisplay {
               }
             },
             "circle" => {
-              use svg::node::element::Circle; 
               let mut circle: Circle = Circle::new();
               circle = circle.set("fill", "#ffffff");
               for (attribute, value) in attributes {
@@ -128,7 +127,6 @@ impl GamepadDisplay {
               document = cloned.add(circle);
             },
             "path" => {
-              use svg::node::element::Path;
               let mut path: Path = Path::new();
               path = path.set("fill", "#ffffff");
               for (attribute, value) in attributes {
