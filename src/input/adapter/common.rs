@@ -16,7 +16,8 @@ pub enum InputButton {
   DPadUp,
   DPadDown,
   DPadLeft,
-  DPadRight
+  DPadRight,
+  Guide
 }
 
 // Represents the axes that are universally available on gamepads.
@@ -31,8 +32,8 @@ pub enum InputAxis {
 // Represents the different events possible on a gamepad.
 #[derive(Debug)]
 pub enum InputEvent {
-  GamepadButton(usize, InputButton, f32),
-  GamepadAxis(usize, InputAxis, f32)
+  GamepadButton(usize, InputButton, i16),
+  GamepadAxis(usize, InputAxis, i16)
 }
 
 impl InputEvent {

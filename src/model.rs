@@ -1,8 +1,6 @@
 use crate::{
   input::{
-    adapter::common::{
-      InputEvent
-    },
+    adapter::common::InputEvent,
     switch::{
       SwitchPad,
       EmulatedPad
@@ -35,7 +33,7 @@ impl ClientModel {
     return match UdpSocket::bind("0.0.0.0:8000") {
       Ok(sock) => Ok(
         ClientModel {
-          server_ip: "".to_string(),
+          server_ip: String::from(""),
           sock: sock,
           pads: c![EmulatedPad::new(), for _i in 0..8]
         }
@@ -51,9 +49,10 @@ impl ClientModel {
 
   // Server IP Setter
   pub fn set_server_ip(&mut self, server_ip: &String) -> () {
-    self.server_ip = server_ip.to_string();
+    self.server_ip = String::from(server_ip);
   }
 
+  // Gamepads Getter, but it's worth noting that this clones the list.
   pub fn get_pads(&self) -> Vec<EmulatedPad> {
     return self.pads.clone();
   }
@@ -66,8 +65,9 @@ impl ClientModel {
   /**
    * Disconnects a gamepad from this model.
    * 
-   * This really just sets the target gamepad to a type of Disconnected; it
-   * doesn't actually get rid of the gamepad itself.
+   * This really just sets the target gamepad to a type of Disconnected. It
+   * doesn't actually get rid of the gamepad itself, but the Switch should
+   * disconnect it on the next few packets.
    */
   pub fn disconnect_pad(&mut self, i: &usize) -> () {
     self.pads[*i].disconnect();
@@ -114,7 +114,6 @@ impl ClientModel {
     for pad in &mut self.pads {
       pad.disconnect();
     }
-    // self.pads = c![EmulatedPad::new(), for _i in 0..4];
     let start: time::Instant = time::Instant::now();
     while start.elapsed().as_millis() < 3000 {
       match self.sock.send_to(
@@ -125,15 +124,16 @@ impl ClientModel {
         Ok(_) => ()
       }
     }
-    return Ok("Gamepads should now be cleaned up.".to_string());
+    return Ok(String::from("Gamepads should now be cleaned up."));
   }
 }
 
 /**
  * Represents packed data to be sent to an input server.
  * 
- * This isn't the cleanest or most dynamic thing by any means, but I wanted it
- * to be consistent with the original data structure.
+ * This isn't the cleanest or most dynamic thing by any means, and the memory
+ * use definitely isn't optimized. However, I wanted it to be consistent with
+ * the original data structure.
  */
 pub struct PackedData {
   magic: u16,
@@ -215,59 +215,59 @@ impl PackedData {
 
       con_type: to_switch_pad_value(pads[0].get_switch_pad()) as u16,
       keys: *pads[0].get_keyout() as u64,
-      joy_l_x: pads[0].get_left().0,
-      joy_l_y: pads[0].get_left().1,
-      joy_r_x: pads[0].get_right().0,
-      joy_r_y: pads[0].get_right().1,
+      joy_l_x: pads[0].get_left().0 as i32,
+      joy_l_y: pads[0].get_left().1 as i32,
+      joy_r_x: pads[0].get_right().0 as i32,
+      joy_r_y: pads[0].get_right().1 as i32,
 
       con_type2: to_switch_pad_value(pads[1].get_switch_pad()) as u16,
       keys2: *pads[1].get_keyout() as u64,
-      joy_l_x2: pads[1].get_left().0,
-      joy_l_y2: pads[1].get_left().1,
-      joy_r_x2: pads[1].get_right().0,
-      joy_r_y2: pads[1].get_right().1,
+      joy_l_x2: pads[1].get_left().0 as i32,
+      joy_l_y2: pads[1].get_left().1 as i32,
+      joy_r_x2: pads[1].get_right().0 as i32,
+      joy_r_y2: pads[1].get_right().1 as i32,
 
       con_type3: to_switch_pad_value(pads[2].get_switch_pad()) as u16,
       keys3: *pads[2].get_keyout() as u64,
-      joy_l_x3: pads[2].get_left().0,
-      joy_l_y3: pads[2].get_left().1,
-      joy_r_x3: pads[2].get_right().0,
-      joy_r_y3: pads[2].get_right().1,
+      joy_l_x3: pads[2].get_left().0 as i32,
+      joy_l_y3: pads[2].get_left().1 as i32,
+      joy_r_x3: pads[2].get_right().0 as i32,
+      joy_r_y3: pads[2].get_right().1 as i32,
 
       con_type4: to_switch_pad_value(pads[3].get_switch_pad()) as u16,
       keys4: *pads[3].get_keyout() as u64,
-      joy_l_x4: pads[3].get_left().0,
-      joy_l_y4: pads[3].get_left().1,
-      joy_r_x4: pads[3].get_right().0,
-      joy_r_y4: pads[3].get_right().1,
+      joy_l_x4: pads[3].get_left().0 as i32,
+      joy_l_y4: pads[3].get_left().1 as i32,
+      joy_r_x4: pads[3].get_right().0 as i32,
+      joy_r_y4: pads[3].get_right().1 as i32,
 
       con_type5: to_switch_pad_value(pads[4].get_switch_pad()) as u16,
       keys5: *pads[4].get_keyout() as u64,
-      joy_l_x5: pads[4].get_left().0,
-      joy_l_y5: pads[4].get_left().1,
-      joy_r_x5: pads[4].get_right().0,
-      joy_r_y5: pads[4].get_right().1,
+      joy_l_x5: pads[4].get_left().0 as i32,
+      joy_l_y5: pads[4].get_left().1 as i32,
+      joy_r_x5: pads[4].get_right().0 as i32,
+      joy_r_y5: pads[4].get_right().1 as i32,
 
       con_type6: to_switch_pad_value(pads[5].get_switch_pad()) as u16,
       keys6: *pads[5].get_keyout() as u64,
-      joy_l_x6: pads[5].get_left().0,
-      joy_l_y6: pads[5].get_left().1,
-      joy_r_x6: pads[5].get_right().0,
-      joy_r_y6: pads[5].get_right().1,
+      joy_l_x6: pads[5].get_left().0 as i32,
+      joy_l_y6: pads[5].get_left().1 as i32,
+      joy_r_x6: pads[5].get_right().0 as i32,
+      joy_r_y6: pads[5].get_right().1 as i32,
 
       con_type7: to_switch_pad_value(pads[6].get_switch_pad()) as u16,
       keys7: *pads[6].get_keyout() as u64,
-      joy_l_x7: pads[6].get_left().0,
-      joy_l_y7: pads[6].get_left().1,
-      joy_r_x7: pads[6].get_right().0,
-      joy_r_y7: pads[6].get_right().1,
+      joy_l_x7: pads[6].get_left().0 as i32,
+      joy_l_y7: pads[6].get_left().1 as i32,
+      joy_r_x7: pads[6].get_right().0 as i32,
+      joy_r_y7: pads[6].get_right().1 as i32,
 
       con_type8: to_switch_pad_value(pads[7].get_switch_pad()) as u16,
       keys8: *pads[7].get_keyout() as u64,
-      joy_l_x8: pads[7].get_left().0,
-      joy_l_y8: pads[7].get_left().1,
-      joy_r_x8: pads[7].get_right().0,
-      joy_r_y8: pads[7].get_right().1,
+      joy_l_x8: pads[7].get_left().0 as i32,
+      joy_l_y8: pads[7].get_left().1 as i32,
+      joy_r_x8: pads[7].get_right().0 as i32,
+      joy_r_y8: pads[7].get_right().1 as i32,
     }
   }
 

@@ -25,7 +25,6 @@ use std::{
   panic,
   panic::AssertUnwindSafe
 };
-extern crate std;
 
 /**
  * Representing a cross-platform input adapter that will read from an SDL
@@ -83,16 +82,20 @@ impl SdlAdapter {
   }
 
   // Maps whether a button is pressed to its respective f32 value.
-  fn to_button_value(&self, pressed: bool) -> f32 {
+  fn to_button_value(&self, pressed: bool) -> i16 {
     return match pressed {
-      true => 1.0,
-      false => 0.0
+      true => 1,
+      false => 0
     }
   }
 
   // Maps an SDL button to an InputButton.
   fn to_button(&self, which: &u32, button: &Button) -> Result<InputButton, String> {
     return match button {
+      /**
+       * TODO: I know it's just a band-aid solution to wrong mappings, but this
+       * could probably be abstracted somehow.
+       */
       Button::A => match self.game_controller.name_for_index(*which) {
         Ok(name) => match name.as_str() {
           "Nintendo Switch Pro Controller" => Ok(InputButton::East),
@@ -122,16 +125,16 @@ impl SdlAdapter {
         Err(_) => Err(String::from("Couldn't get controller name from index."))
       },
       Button::Back => Ok(InputButton::Select),
+      Button::Guide => Ok(InputButton::Guide),
       Button::Start => Ok(InputButton::Start),
+      Button::LeftStick => Ok(InputButton::LeftStick),
+      Button::RightStick => Ok(InputButton::RightStick),
       Button::LeftShoulder => Ok(InputButton::LeftBumper),
       Button::RightShoulder => Ok(InputButton::RightBumper),
       Button::DPadUp => Ok(InputButton::DPadUp),
       Button::DPadDown => Ok(InputButton::DPadDown),
       Button::DPadLeft => Ok(InputButton::DPadLeft),
-      Button::DPadRight => Ok(InputButton::DPadRight),
-      _ => Err(
-        format!("{:?} is currently an unmapped SDL button.", button)
-      )
+      Button::DPadRight => Ok(InputButton::DPadRight)
     }
   }
 
@@ -144,7 +147,7 @@ impl SdlAdapter {
         InputEvent::GamepadAxis(
           *which as usize,
           mapped,
-          self.to_axis_value(&axis, value)
+          self.to_axis_value(axis, value)
         )
       ),
       Err(e) => Err(e)
@@ -165,16 +168,15 @@ impl SdlAdapter {
   } 
 
   /**
-   * Converts the integer value of an SDL axis event into an f32 value.
+   * Converts the integer value of an SDL axis event.
    *
    * Additionally, the Y-axes for the left and right analog sticks are inverted
    * so that their inputs are like normal, not-inverted analog sticks.
    */
-  fn to_axis_value(&self, axis: &Axis, value: &i16) -> f32 {
-    let calculated: f32 = (*value as f32) / 32767.0;
+  fn to_axis_value(&self, axis: &Axis, value: &i16) -> i16 {
     return match axis {
-      Axis::LeftY | Axis::RightY => -calculated,
-      _ => calculated
+      Axis::LeftY | Axis::RightY => -value,
+      _ => *value
     }
   } 
 
@@ -224,6 +226,8 @@ impl InputAdapter for SdlAdapter {
 
     /* Disable the panic hook so we ignore panics from pressing an unmapped
      * button. We can't do much else until rust-sdl2 fixes this.
+     *
+     * rust-sdl2 issue: https://github.com/Rust-SDL2/rust-sdl2/issues/1128
      */
     let prev_hook = panic::take_hook();
     panic::set_hook(Box::new(|_| {}));
@@ -237,7 +241,6 @@ impl InputAdapter for SdlAdapter {
               // We need to store the gamepad somewhere to receive button events.
               let gamepad: GameController = self.game_controller.open(which)
                 .unwrap();
-              println!("{}", &gamepad.name());
               self.gamepads.insert(gamepad.instance_id(), gamepad); 
             },
             Event::ControllerDeviceRemoved { which, .. } => {

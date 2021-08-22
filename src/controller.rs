@@ -11,8 +11,7 @@ use crate::{
     }
   },
   config::Config,
-  model::ClientModel,
-  view::common::ClientView 
+  model::ClientModel
 };
 
 use confy::ConfyError;
@@ -20,9 +19,7 @@ use std::{
   collections::{
     HashMap,
     HashSet
-  },
-  process,
-  str::FromStr
+  }
 };
 
 /**
@@ -36,7 +33,6 @@ pub struct ClientController {
   input_delays: Vec<u8>,
 
   model: ClientModel,
-  view: Box<dyn ClientView>,
   running: bool,
 
   input_adapter: Box<dyn InputAdapter>,
@@ -53,15 +49,13 @@ impl ClientController {
    * supported gamepads.
    */
   pub fn new(
-    model: ClientModel, view: Box<dyn ClientView>,
-    input_adapter: Box<dyn InputAdapter>
+    model: ClientModel, input_adapter: Box<dyn InputAdapter>
   ) -> ClientController {
     return ClientController {
       switch_pads: vec!(),
       input_delays: vec!(),
 
       model: model,
-      view: view,
       running: false,
 
       input_adapter: input_adapter,
@@ -77,19 +71,19 @@ impl ClientController {
    * actually sending commands to the controller. Every time a setter is called,
    * the current config is saved.
    */
-  fn set_server_ip(&mut self, server_ip: &String) -> Result<String, String> {
+  pub fn set_server_ip(&mut self, server_ip: &String) -> Result<String, String> {
     self.model.set_server_ip(server_ip);
     return self.save_config();
   }
 
-  fn set_switch_pad(
+  pub fn set_switch_pad(
     &mut self, i: &usize, switch_pad: &SwitchPad
   ) -> Result<String, String> {
     self.switch_pads[*i] = *switch_pad;
     return self.save_config();
   }
 
-  fn set_input_delay(
+  pub fn set_input_delay(
     &mut self, i: &usize, input_delay: &u8
   ) -> Result<String, String> {
     self.input_delays[*i] = *input_delay;
@@ -103,6 +97,7 @@ impl ClientController {
   pub fn initialize(&mut self) -> Result<String, String> {
     return match self.load_config() {
       Ok(msg) => {
+        /*
         self.view.initialize();
         self.view.writeln(msg);
         self.view.writeln(
@@ -111,7 +106,8 @@ impl ClientController {
           commands."
           .to_string()
         );
-        return Ok("Welcome to sys-hidplus-client-rs!".to_owned());
+        */
+        return Ok(String::from("Welcome to sys-hidplus-client-rs!"));
       },
       Err(e) => Err(e)
     }
@@ -180,10 +176,10 @@ impl ClientController {
       );
     } else {
       if self.running {
-        return Err("The client is already running.".to_string());
+        return Err(String::from("The client is already running."));
       } else {
         self.running = true;
-        return Ok("The client is ready to receive inputs.".to_string());
+        return Ok(String::from("The client is ready to receive inputs."));
       }
     }
   }
@@ -201,42 +197,43 @@ impl ClientController {
     }
   }
 
-  // Cleans up and disconnects all connected gamepads.
+  /**
+   * Cleans up and disconnects all connected gamepads. If none are connected,
+   * there's no need to tell the model to clean up the Switch as well.
+   */
   fn cleanup(&mut self) -> Result<String, String> {
-    self.view.writeln(
-      "Cleaning up connected gamepads... This will take a moment.".to_string()
-    );
-    self.input_map.clear();
-    return self.model.cleanup();
-  }
-
-  // Exits the client, which is effectively stopping then process::exit().
-  pub fn exit(&mut self) -> Result<String, String> {
-    if self.running {
-      return match self.stop() {
-        Ok(_) => self.exit_ok(),
-        Err(e) => self.exit_err(e)
-      }
+    if self.input_map.len() > 0 {
+      self.input_map.clear();
+      return self.model.cleanup();
     } else {
-      return self.exit_ok();
+      return Ok(
+        String::from("No need to clean up since no gamepads are connected.")
+      );
     }
   }
 
-  // Generically exits the client as a success.
-  fn exit_ok(&mut self) -> Result<String, String> {
-    self.view.writeln("The client exited successfully. Goodbye!".to_string());
-    process::exit(0);
-  }
-
-  // Exits the client with an associated error message.
-  fn exit_err(&mut self, e: String) -> Result<String, String> {
-    self.view.writeln(
-      format!(
-        "The client did not exit successfully. The following error occurred: \
-        {}", e
-      )
-    );
-    process::exit(1);
+  /**
+   * Preps the client for an exit by first stopping the client if it is
+   * currently running. This method then returns whether it's okay to
+   * successfully exit. Unsuccessfully exiting entails an error occurring during
+   * the stopping process.
+   *
+   * While we could just directly exit here, sometimes the ClientApp layer has
+   * things to clean up to ensure... well, a clean exit.
+   */
+  pub fn exit_prep(&mut self) -> Result<(), String> {
+    if self.running {
+      return match self.stop() {
+        Ok(_) => Ok(()),
+        Err(e) => Err(
+          format!(
+            "Failed to exit successfully. The following error occurred: {}", e
+          )
+        )
+      }
+    } else {
+      return Ok(());
+    }
   }
 
   /**
@@ -245,28 +242,17 @@ impl ClientController {
    *
    * This should be used at a fixed time interval.
    */
-  pub fn update(&mut self) -> () {
-    match self.view.update() {
-      Ok(_) => (),
-      Err(e) => {
-        self.view.writeln(
-          format!(
-            "The following error occurred while updating the view: {}", e
-          )
-        );
-        match self.exit() {
-          Ok(_) => (),
-          Err(_) => ()
-        }
-      }
-    }
-    self.parse_command_buffer();
+  pub fn update(&mut self) -> Result<(), String> {
+    // self.parse_command_buffer();
 
     if self.running { 
       self.update_inputs();
-      if let Err(e) = self.update_server() {
-        self.view.writeln(format!("{}", e));
+      return match self.update_server() {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e)
       }
+    } else {
+      return Ok(());
     }
   }
 
@@ -295,22 +281,23 @@ impl ClientController {
   }
 
   // Update everything related to inputs on this controller.
-  fn update_inputs(&mut self) -> () {
-    self.disconnect_inactive();
+  fn update_inputs(&mut self) -> Vec<Result<String, String>> {
+    let mut results: Vec<Result<String, String>> = vec!();
+    results.extend(self.disconnect_inactive());
     self.fill_input_buffer();
-    self.parse_input_buffer();
+    results.extend(self.parse_input_buffer());
+    return results;
   } 
 
-  // Disconnects all disconnected controllers from this controller.
-  fn disconnect_inactive(&mut self) -> () {
+  // Attempts to disconnect all disconnected gamepads from this controller.
+  fn disconnect_inactive(&mut self) -> Vec<Result<String, String>> {
+    let mut results: Vec<Result<String, String>> = vec!();
     for (gamepad_id, _) in self.input_map.clone() {
       if !self.input_adapter.is_connected(&gamepad_id) {
-        match self.disconnect(&gamepad_id) {
-          Ok(msg) => self.view.writeln(format!("{}", msg)),
-          Err(e) => self.view.writeln(format!("{}", e))
-        }
+        results.push(self.disconnect(&gamepad_id));
       }
     }
+    return results;
   }
 
   // Disconnects the gamepad with the given ID, if it exists.
@@ -343,6 +330,7 @@ impl ClientController {
   // Fills the input buffer with events from the input adapter.
   fn fill_input_buffer(&mut self) -> () {
     for event in self.input_adapter.read() {
+      // Apply artifical input lag only if it's a connected controller.
       if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
         self.input_buffer.insert(
           0,
@@ -355,19 +343,18 @@ impl ClientController {
   }
 
   // Parses events from the input buffer and updates all corresponding gamepads.
-  fn parse_input_buffer(&mut self) -> () {
+  fn parse_input_buffer(&mut self) -> Vec<Result<String, String>> {
+    let mut results: Vec<Result<String, String>> = vec!();
     let mut new_buffer: Vec<(InputEvent, u8)> = vec!();
+    
     while let Some((event, delay)) = self.input_buffer.pop() {
       if delay == 0 {
         if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
           self.model.update_pad(&i, &event);
         } else {
           if let InputEvent::GamepadButton(gamepad_id, button, value) = event {
-            if button == InputButton::RightBumper && value == 1.0 {
-              match self.connect(&gamepad_id) {
-                Ok(msg) => self.view.writeln(format!("{}", msg)),
-                Err(e) => self.view.writeln(format!("{}", e))
-              }
+            if button == InputButton::RightBumper && value == 1 {
+              results.push(self.connect(&gamepad_id));
             }
           }
         }
@@ -375,17 +362,19 @@ impl ClientController {
         new_buffer.insert(0, (event, delay - 1));
       }
     }
+
     self.input_buffer = new_buffer;
+    return results;
   }
 
   /**
    * Attempts to assign the given gamepad ID and switch pad type to an open
    * slot, while mapping said ID the corresponding index. Slots are open so as
-   * long as they are not equal to None, or if the associated controller is
-   * reported by the respective input reader as disconnected.
+   * long as they are not equal to a type of None, or if the associated
+   * controller is reported by the input adapter as disconnected.
    *
-   * Is O(n^2) in the context of parse_buffer(), but at least controller
-   * assignment shouldn't happen often.
+   * This is O(n^2) when used in the context of parse_input_buffer(), but at
+   * least controller assignment doesn't happen often.
    */
   fn connect(&mut self, gamepad_id: &usize) -> Result<String, String> {
     let mut mapped: HashSet<&usize> = HashSet::new();
@@ -427,6 +416,7 @@ impl ClientController {
     );
   }
 
+  /*
   // Parses all buffered commands within the view.
   fn parse_command_buffer(&mut self) -> () {
     while let Some(command) = self.view.get_command_buffer().pop() {
@@ -582,6 +572,7 @@ impl ClientController {
       _ => Err(format!("'{}' is not a valid command.", keyword))
     }
   }
+  */
 }
 
 

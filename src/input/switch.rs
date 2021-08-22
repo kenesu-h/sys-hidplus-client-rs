@@ -95,6 +95,7 @@ impl SwitchButton {
    * Maps an input event button to a Switch button depending on the specified
    * pad type.
    */
+  // TODO: Make this neater later.
   pub fn map_button(
     button: &InputButton, switch_pad: &SwitchPad
   ) -> Result<SwitchButton, String> {
@@ -109,7 +110,6 @@ impl SwitchButton {
 
       InputButton::LeftBumper => Ok(Self::L),
       InputButton::RightBumper => Ok(Self::R),
-      // TODO: It may be worth changing these to SLL/SLR/SRL/SRR.
       InputButton::LeftTrigger => Ok(Self::ZL),
       InputButton::RightTrigger => Ok(Self::ZR),
 
@@ -117,29 +117,38 @@ impl SwitchButton {
       InputButton::Select => Ok(Self::Minus),
       
       InputButton::North => match switch_pad {
-        SwitchPad::Disconnected => Err(format!("No map for disconnected pad.")),
+        SwitchPad::Disconnected => Err(
+          String::from("No map for disconnected pad.")
+        ),
         SwitchPad::ProController => Ok(Self::X),
         SwitchPad::JoyConLSide => Ok(Self::DR),
         SwitchPad::JoyConRSide => Ok(Self::Y)
       },
       InputButton::East => match switch_pad {
-        SwitchPad::Disconnected => Err(format!("No map for disconnected pad.")),
+        SwitchPad::Disconnected => Err(
+          String::from("No map for disconnected pad.")
+        ),
         SwitchPad::ProController => Ok(Self::A),
         SwitchPad::JoyConLSide => Ok(Self::DD),
         SwitchPad::JoyConRSide => Ok(Self::X)
       },
       InputButton::South => match switch_pad {
-        SwitchPad::Disconnected => Err(format!("No map for disconnected pad.")),
+        SwitchPad::Disconnected => Err(
+          String::from("No map for disconnected pad.")
+        ),
         SwitchPad::ProController => Ok(Self::B),
         SwitchPad::JoyConLSide => Ok(Self::DL),
         SwitchPad::JoyConRSide => Ok(Self::A)
       },
       InputButton::West => match switch_pad {
-        SwitchPad::Disconnected => Err(format!("No map for disconnected pad.")),
+        SwitchPad::Disconnected => Err(
+          String::from("No map for disconnected pad.")
+        ),
         SwitchPad::ProController => Ok(Self::Y),
         SwitchPad::JoyConLSide => Ok(Self::DU),
         SwitchPad::JoyConRSide => Ok(Self::B)
-      }
+      },
+      InputButton::Guide => Err(String::from("No map for the guide button."))
     }
   }
 }
@@ -156,8 +165,8 @@ impl SwitchButton {
 pub struct EmulatedPad {
   switch_pad: SwitchPad,
   keyout: i32,
-  left: (i32, i32),
-  right: (i32, i32)
+  left: (i16, i16),
+  right: (i16, i16)
 }
 
 impl EmulatedPad {
@@ -183,11 +192,11 @@ impl EmulatedPad {
     return &self.keyout;
   }
 
-  pub fn get_left(&self) -> &(i32, i32) {
+  pub fn get_left(&self) -> &(i16, i16) {
     return &self.left;
   }
 
-  pub fn get_right(&self) -> &(i32, i32) {
+  pub fn get_right(&self) -> &(i16, i16) {
     return &self.right;
   }
 
@@ -216,7 +225,7 @@ impl EmulatedPad {
   }
 
   // Updates this pad's keyout.
-  fn update_keyout(&mut self, button: &InputButton, value: &f32) -> () {
+  fn update_keyout(&mut self, button: &InputButton, value: &i16) -> () {
     if self.switch_pad != SwitchPad::Disconnected {
       match &SwitchButton::map_button(
         button,
@@ -224,7 +233,7 @@ impl EmulatedPad {
       ) {
         Ok(switch_button) => self.set_del_bit(
           &switch_button.value(),
-          &(*value as i32)
+          &value
         ),
         Err(_) => ()
       }
@@ -232,13 +241,12 @@ impl EmulatedPad {
   }
 
   // Updates the stick values for an axis.
-  fn update_axis(&mut self, axis: &InputAxis, value: &f32) -> () {
-    let converted: i32 = (*value * 32767.0) as i32;
+  fn update_axis(&mut self, axis: &InputAxis, value: &i16) -> () {
     match axis {
-      InputAxis::LeftX => self.left.0 = converted,
-      InputAxis::LeftY => self.left.1 = converted,
-      InputAxis::RightX => self.right.0 = converted,
-      InputAxis::RightY => self.right.1 = converted
+      InputAxis::LeftX => self.left.0 = *value,
+      InputAxis::LeftY => self.left.1 = *value,
+      InputAxis::RightX => self.right.0 = *value,
+      InputAxis::RightY => self.right.1 = *value
     }
   }
 
@@ -246,7 +254,7 @@ impl EmulatedPad {
    * Updates the keyout using a bitwise OR if an input value isn't 0, otherwise
    * a bitwise AND using the complement.
    */
-  fn set_del_bit(&mut self, bit: &i32, value: &i32) -> () {
+  fn set_del_bit(&mut self, bit: &i32, value: &i16) -> () {
     if value != &0 {
       self.keyout = self.keyout | bit;
     } else {

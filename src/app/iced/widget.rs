@@ -73,7 +73,7 @@ impl GamepadDisplay {
     &self, attribute: &String, value: &svg::node::Value, path: Path, button: &SwitchButton
   ) -> Result<Path, String> {
     if self.is_button(attribute, value, button) {
-      let axis: &(i32, i32);
+      let axis: &(i16, i16);
       match button {
         SwitchButton::LST => axis = self.pad.get_left(),
         SwitchButton::RST => axis = self.pad.get_right(),
@@ -84,8 +84,8 @@ impl GamepadDisplay {
           "transform",
           format!(
             "translate({} {})",
-            ((axis.0 as f32 / 32767.0) * 5.0) as i32,
-            -((axis.1 as f32 / 32767.0) * 5.0) as i32
+            ((axis.0 / 32767) as f32 * 5.0) as i16,
+            -((axis.1 / 32767) as f32 * 5.0) as i16
           )
         )
       );

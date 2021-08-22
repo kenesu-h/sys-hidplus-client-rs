@@ -1,3 +1,3 @@
+pub mod cli;
 pub mod common;
-pub mod egui;
 pub mod iced;

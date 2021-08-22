@@ -42,11 +42,7 @@ impl IcedApp {
       Ok(model) => {
         return IcedApp {
           theme: style::Theme::Dark,
-          controller: ClientController::new(
-            model,
-            Box::new(CLIView::new()),
-            Box::new(SdlAdapter::new())
-          ),
+          controller: ClientController::new(model, Box::new(SdlAdapter::new())),
           button_states: HashMap::new(),
           start_button_state: button::State::new(),
           exit_button_state: button::State::new(),
@@ -120,9 +116,9 @@ impl Application for IcedApp {
         self.update_status(result);
         self.started = !self.started;
       },
-      Self::Message::Exit => {
-        let result: Result<String, String> = self.controller.exit();
-        self.update_status(result);
+      Self::Message::Exit => match self.controller.exit_prep() {
+        Ok(_) => std::process::exit(0),
+        Err(e) => panic!("{}", e)
       }
     }
 

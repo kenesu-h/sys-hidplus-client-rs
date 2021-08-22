@@ -8,7 +8,7 @@ pub mod view;
 use crate::{
   app::{
     common::ClientApp,
-    egui::EguiApp,
+    cli::CliApp,
     iced::application::IcedApp
   },
   input::adapter::sdl::SdlAdapter,
@@ -34,6 +34,7 @@ fn main() -> () {
   let app: Box<dyn ClientApp> = Box::new(IcedApp::new());
   app.initialize();
   */
+  // CliApp::initialize();
   IcedApp::initialize();
   /*
   match ClientModel::new() {
