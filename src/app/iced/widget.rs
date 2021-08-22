@@ -84,8 +84,8 @@ impl GamepadDisplay {
           "transform",
           format!(
             "translate({} {})",
-            ((axis.0 / 32767) as f32 * 5.0) as i16,
-            -((axis.1 / 32767) as f32 * 5.0) as i16
+            ((axis.0 as f32 / 32767.0) * 5.0) as i16,
+            -((axis.1 as f32 / 32767.0) * 5.0) as i16
           )
         )
       );

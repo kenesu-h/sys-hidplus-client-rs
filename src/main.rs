@@ -34,8 +34,8 @@ fn main() -> () {
   let app: Box<dyn ClientApp> = Box::new(IcedApp::new());
   app.initialize();
   */
-  // CliApp::initialize();
-  IcedApp::initialize();
+  CliApp::initialize();
+  // IcedApp::initialize();
   /*
   match ClientModel::new() {
     Ok(model) => {

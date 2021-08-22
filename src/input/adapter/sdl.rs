@@ -96,33 +96,33 @@ impl SdlAdapter {
        * TODO: I know it's just a band-aid solution to wrong mappings, but this
        * could probably be abstracted somehow.
        */
-      Button::A => match self.game_controller.name_for_index(*which) {
-        Ok(name) => match name.as_str() {
+      Button::A => match self.gamepads.get(which) {
+        Some(gamepad) => match gamepad.name().as_str() {
           "Nintendo Switch Pro Controller" => Ok(InputButton::East),
           _ => Ok(InputButton::South)
         },
-        Err(_) => Err(String::from("Couldn't get controller name from index."))
+        None => Err(String::from("Couldn't get controller name from index."))
       },
-      Button::B => match self.game_controller.name_for_index(*which) {
-        Ok(name) => match name.as_str() {
+      Button::B => match self.gamepads.get(which) {
+        Some(gamepad) => match gamepad.name().as_str() {
           "Nintendo Switch Pro Controller" => Ok(InputButton::South),
           _ => Ok(InputButton::East)
         },
-        Err(_) => Err(String::from("Couldn't get controller name from index."))
+        None => Err(String::from("Couldn't get controller name from index."))
       },
-      Button::X => match self.game_controller.name_for_index(*which) {
-        Ok(name) => match name.as_str() {
+      Button::X => match self.gamepads.get(which) {
+        Some(gamepad) => match gamepad.name().as_str() {
           "Nintendo Switch Pro Controller" => Ok(InputButton::North),
           _ => Ok(InputButton::West)
         },
-        Err(_) => Err(String::from("Couldn't get controller name from index."))
+        None => Err(String::from("Couldn't get controller name from index."))
       },
-      Button::Y => match self.game_controller.name_for_index(*which) {
-        Ok(name) => match name.as_str() {
+      Button::Y => match self.gamepads.get(which) {
+        Some(gamepad) => match gamepad.name().as_str() {
           "Nintendo Switch Pro Controller" => Ok(InputButton::West),
           _ => Ok(InputButton::North)
         },
-        Err(_) => Err(String::from("Couldn't get controller name from index."))
+        None => Err(String::from("Couldn't get controller name from index."))
       },
       Button::Back => Ok(InputButton::Select),
       Button::Guide => Ok(InputButton::Guide),
@@ -175,7 +175,13 @@ impl SdlAdapter {
    */
   fn to_axis_value(&self, axis: &Axis, value: &i16) -> i16 {
     return match axis {
-      Axis::LeftY | Axis::RightY => -value,
+      Axis::LeftY | Axis::RightY => {
+        if value == &i16::MIN {
+          return i16::MAX;
+        } else {
+          return -value;
+        }
+      },
       _ => *value
     }
   } 
