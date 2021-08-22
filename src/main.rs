@@ -3,7 +3,6 @@ pub mod controller;
 pub mod app;
 pub mod input;
 pub mod model;
-pub mod view;
 
 use crate::{
   app::{
@@ -16,9 +15,6 @@ use crate::{
   controller::{
     ClientController
   },
-  view::{
-    cli::CLIView
-  }
 };
 use crossbeam_channel::{tick, select};
 use std::time;

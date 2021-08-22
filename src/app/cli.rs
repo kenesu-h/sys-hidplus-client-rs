@@ -1,17 +1,17 @@
 use crate::{
   app::common::{ClientApp, ClientMessage},
-  input::adapter::sdl::SdlAdapter,
+  input::{
+    adapter::sdl::SdlAdapter,
+    switch::SwitchPad
+  },
   model::ClientModel,
   controller::ClientController
 };
 
 use crossbeam_channel::{tick, select};
-use crossterm::{
-  event::{self, Event, KeyCode, KeyEvent, EventStream},
-  terminal::{disable_raw_mode, enable_raw_mode}
-};
-use futures_timer::Delay;
 use std::{
+  io::stdin,
+  str::FromStr,
   sync::{
     mpsc,
     mpsc::{Receiver, TryRecvError}
@@ -28,26 +28,11 @@ pub struct CliApp {
 fn spawn_stdin_channel() -> Receiver<String> {
   let (tx, rx) = mpsc::channel::<String>();
   thread::spawn(move || loop {
-    tx.send(read_line().unwrap()).unwrap();
+    let mut buffer: String = String::new();
+    stdin().read_line(&mut buffer).unwrap();
+    tx.send(buffer).unwrap();
   });
   return rx;
-}
-
-// https://github.com/crossterm-rs/crossterm/blob/master/examples/event-read-char-line.rs
-fn read_line() -> Result<String, std::io::Error> {
-  let mut line = String::new();
-  while let Event::Key(KeyEvent { code, .. }) = event::read()? {
-      match code {
-          KeyCode::Enter => {
-              break;
-          }
-          KeyCode::Char(c) => {
-              line.push(c);
-          }
-          _ => {}
-      }
-  }
-  return Ok(line);
 }
 
 impl CliApp {
@@ -64,17 +49,18 @@ impl CliApp {
   fn start_loop(&mut self) -> () {
     let ticks = tick(Duration::from_secs_f32(1.0 / 60.0));
     match self.controller.initialize() {
-      Ok(o) => println!("{}", o),
-      Err(e) => self.panic(e)
+      Ok(o) => self.write_ok(o),
+      Err(e) => panic!("{}", e)
     }
-    enable_raw_mode();
+    println!("Type 'start' to begin the client or 'exit' to close it.");
+    println!("Type 'help' for a list of all available commands.");
 
     loop {
       select! {
         recv(ticks) -> _ => { 
           match self.parse_buffer() {
             Ok(_) => (),
-            Err(e) => self.panic(e)
+            Err(e) => panic!("{}", e)
           }
           self.parse_message(ClientMessage::Tick);
         }
@@ -112,11 +98,83 @@ impl CliApp {
       "start" => Ok(ClientMessage::Start),
       "stop" => Ok(ClientMessage::Stop),
       "exit" => Ok(ClientMessage::Exit),
+      "set_server_ip" => {
+        if args.len() >= 1 {
+          if let Ok(server_ip) = args[0].parse::<String>() {
+            return Ok(ClientMessage::SetServerIp(server_ip))
+          } else {
+            return Err(
+              format!(
+                "'{}' could not be parsed into a string.",
+                args[0]
+              )
+            );
+          }
+        } else {
+          return Err(
+            String::from("set_server_ip requires at least one argument.")
+          );
+        }
+      },
+      "set_switch_pad" => {
+        if args.len() >= 2 {
+          if let Ok(i) = args[0].parse::<usize>() {
+            if let Ok(switch_pad) = SwitchPad::from_str(args[1]) {
+              return Ok(ClientMessage::SetSwitchPad(i, switch_pad))
+            } else {
+              return Err(
+                format!(
+                  "'{}' could not be parsed into a switch gamepad type.",
+                  args[1]
+                )
+              );
+            }
+          } else {
+            return Err(
+              format!(
+                "'{}' could not be parsed into a natural number (0 or higher).",
+                args[0]
+              )
+            );
+          }
+        } else {
+          return Err(
+            String::from("set_server_ip requires at least two arguments.")
+          );
+        }
+      },
+      "set_input_delay" => {
+        if args.len() >= 2 {
+          if let Ok(i) = args[0].parse::<usize>() {
+            if let Ok(input_delay) = args[1].parse::<u8>() {
+              return Ok(ClientMessage::SetInputDelay(i, input_delay))
+            } else {
+              return Err(
+                format!(
+                  "'{}' could not be parsed into an 8-bit unsigned integer [0 to 255].",
+                  args[1]
+                )
+              );
+            }
+          } else {
+            return Err(
+              format!(
+                "'{}' could not be parsed into a natural number (0 or higher).",
+                args[0]
+              )
+            );
+          }
+        } else {
+          return Err(
+            String::from("set_server_ip requires at least two arguments.")
+          );
+        }
+      },
       "help" => {
         if args.len() >= 1 {
-          return Ok(ClientMessage::Help(String::from(args[0])));
+          return Ok(ClientMessage::Help(Some(String::from(args[0]))));
         } else {
-          return Err(String::from(""));
+          return Ok(ClientMessage::Help(None));
         }
       },
       _ => Err(format!("'{}' is not a valid command.", keyword))
@@ -128,7 +186,12 @@ impl CliApp {
       ClientMessage::Tick => self.update(),
       ClientMessage::Start => self.start(),
       ClientMessage::Stop => self.stop(),
+      ClientMessage::Restart => self.restart(),
       ClientMessage::Exit => self.exit(),
+      ClientMessage::SetServerIp(server_ip) => self.set_server_ip(&server_ip),
+      ClientMessage::SetSwitchPad(i, switch_pad) => self.set_switch_pad(&i, &switch_pad),
+      ClientMessage::SetInputDelay(i, input_delay) => self.set_input_delay(&i, &input_delay),
+      ClientMessage::Help(maybe_command) => self.help(&maybe_command),
       _ => ()
     }
   }
@@ -154,19 +217,129 @@ impl CliApp {
     }
   }
 
-  fn exit(&mut self) -> () {
-    match self.controller.exit_prep() {
-      Ok(_) => {
-        disable_raw_mode();
-        std::process::exit(0);
-      },
-      Err(e) => self.panic(e)
+  fn restart(&mut self) -> () {
+    match self.controller.restart() {
+      Ok(o) => self.write_ok(o),
+      Err(e) => self.write_err(e)
     }
   }
 
-  fn panic(&self, e: String) -> () {
-    disable_raw_mode();
-    panic!("{}", e);
+  fn exit(&mut self) -> () {
+    match self.controller.exit_prep() {
+      Ok(_) => std::process::exit(0),
+      Err(e) => panic!("{}", e)
+    }
+  }
+
+  fn set_server_ip(&mut self, server_ip: &String) -> () {
+    match self.controller.set_server_ip(server_ip) {
+      Ok(o) => self.write_ok(o),
+      Err(e) => self.write_err(e)
+    }
+  }
+
+  fn set_switch_pad(&mut self, i: &usize, switch_pad: &SwitchPad) -> () {
+    match self.controller.set_switch_pad(i, switch_pad) {
+      Ok(o) => self.write_ok(o),
+      Err(e) => self.write_err(e)
+    }
+  }
+
+  fn set_input_delay(&mut self, i: &usize, input_delay: &u8) -> () {
+    match self.controller.set_input_delay(i, input_delay) {
+      Ok(o) => self.write_ok(o),
+      Err(e) => self.write_err(e)
+    }
+  }
+
+  /**
+   * Either returns a list of all available commands, or provides specific usage
+   * info about a given command.
+   */
+  fn help(&self, maybe_command: &Option<String>) -> () {
+    match maybe_command {
+      None => println!(
+        "\n
+        help (maybe_command): Provides a list of available commands. You can specify \
+        a command after 'help' to view its full usage info.
+        \n
+        restart: Restarts the client. The client must be running.
+        \n
+        start: Starts the client.
+        \n
+        stop: Stops the client and disconnects all connected gamepads.
+        \n
+        exit: Same as 'stop', but totally exits the application.
+        \n
+        set_server_ip 'server_ip': \
+        Sets the server IP to whatever 'server_ip' is. Use 'help set_server_ip \
+        ' for full usage info.
+        \n
+        set_switch_pad 'i' 'switch_pad': \
+        Sets the Switch controller type of the gamepad at slot ('i' + 1). Use \
+        'help set_switch_pad' for full usage info.
+        \n
+        set_input_delay 'i' 'input_delay': \
+        Sets the input delay of the gamepad at slot ('i' + 1). Use 'help \
+        set_input_delay' for full usage info."
+      ),
+      Some(keyword) => {
+        match keyword.as_str() {
+          "help" => println!(
+            "\n
+            Usage: help (command)
+            \n
+            (command) can be the name of any command.
+            \n
+            Example, if you want to see the usage of 'set_server_ip':
+            \n
+            help set_server_ip"
+          ),
+          "restart" => println!("\nUsage: restart"),
+          "start" => println!("\nUsage: start"),
+          "stop" => println!("\nUsage: stop"),
+          "exit" => println!("\nUsage: exit"),
+          "set_server_ip" => println!(
+            "\n
+            Usage: set_server_ip 'server_ip'
+            \n
+            Example, if your Switch's IP is 192.168.1.199:
+            \n
+            set_server_ip 192.168.1.199"
+          ),
+          "set_switch_pad" => println!(
+            "\n
+            Usage: set_switch_pad 'i' 'switch_pad'
+            \n
+            'i' must be either 0 or a positive integer. It also represents the \
+            target index: slot numbers are always equal to 'i' + 1.
+            \n
+            switch_pad must be one of: Disconnected, ProController, \
+            JoyConLSide, or JoyConRSide.
+            \n
+            Example, if you want to set the controller in slot 2 to a sideways \
+            left JoyCon:
+            \n
+            set_switch_pad 1 JoyConLSide"
+          ),
+          "set_input_delay" => println!(
+            "\n
+            Usage: set_input_delay 'i' 'input_delay'
+            \n
+            'i' must be either 0 or a positive integer. It also represents the \
+            target index: slot numbers are always equal to 'i' + 1.
+            \n
+            'input_delay' must be either 0 or a positive integer less than 256.
+            \n
+            Example, if you want to set the input delay of the controller in \
+            slot 3 to 6 frames:
+            \n
+            set_input_delay 2 6"
+          ),
+          _ => println!("'{}' is not a valid command.", keyword)
+        }
+      }
+    }
   }
 
   fn write_ok(&self, s: String) -> () {

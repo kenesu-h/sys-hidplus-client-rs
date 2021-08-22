@@ -1,6 +1,6 @@
 [package]
 name = "client-rs"
-version = "1.1.0-alpha.1"
+version = "1.1.0-alpha.2"
 authors = ["Kenneth <Kenneth@DESKTOP-VHTOUHH>"]
 edition = "2018"
 
@@ -9,16 +9,10 @@ edition = "2018"
 [dependencies]
 confy = "0.4"
 crossbeam-channel = "0.5"
-crossterm = { version = "0.20", features = ["event-stream"] }
-ctrlc = { version = "3.1", features = ["termination"] }
 cute = "0.3"
-futures = "0.3"
-futures-timer = "3.0"
-gilrs = "0.8"
 iced = { version = "0.3", features = ["canvas", "smol", "svg"] }
 iced_native = "0.4"
 iced_wgpu = "0.4"
-multiinput = "0.1"
 sdl2 = "0.34"
 serde = { version = "1.0", features = ["derive"] }
 structure = "0.1"

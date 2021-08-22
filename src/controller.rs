@@ -37,9 +37,7 @@ pub struct ClientController {
 
   input_adapter: Box<dyn InputAdapter>,
   input_map: HashMap<usize, usize>,
-  input_buffer: Vec<(InputEvent, u8)>,
-
-  command_buffer: Vec<String>
+  input_buffer: Vec<(InputEvent, u8)>
 }
 
 impl ClientController {
@@ -60,9 +58,7 @@ impl ClientController {
 
       input_adapter: input_adapter,
       input_map: HashMap::new(),
-      input_buffer: vec!(),
-
-      command_buffer: vec!()
+      input_buffer: vec!()
     }
   } 
 
@@ -96,18 +92,8 @@ impl ClientController {
    */
   pub fn initialize(&mut self) -> Result<String, String> {
     return match self.load_config() {
-      Ok(msg) => {
-        /*
-        self.view.initialize();
-        self.view.writeln(msg);
-        self.view.writeln(
-          "Welcome to sys-hidplus-client-rs! Type 'start' to begin the client \
-          or 'exit' to close it. Type 'help' for a list of all available \
-          commands."
-          .to_string()
-        );
-        */
-        return Ok(String::from("Welcome to sys-hidplus-client-rs!"));
+      Ok(o) => {
+        return Ok(format!("{} Welcome to sys-hidplus-client-rs!", o));
       },
       Err(e) => Err(e)
     }
@@ -150,7 +136,7 @@ impl ClientController {
   }
 
   // Restarts the client, but only if it's currently running.
-  fn restart(&mut self) -> Result<String, String> {
+  pub fn restart(&mut self) -> Result<String, String> {
     if self.running {
       return match self.stop() {
         Ok(_) => self.start(),
@@ -243,8 +229,6 @@ impl ClientController {
    * This should be used at a fixed time interval.
    */
   pub fn update(&mut self) -> Result<(), String> {
-    // self.parse_command_buffer();
-
     if self.running { 
       self.update_inputs();
       return match self.update_server() {
@@ -330,7 +314,7 @@ impl ClientController {
   // Fills the input buffer with events from the input adapter.
   fn fill_input_buffer(&mut self) -> () {
     for event in self.input_adapter.read() {
-      // Apply artifical input lag only if it's a connected controller.
+      // Apply artificial input lag only if it's a connected controller.
       if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
         self.input_buffer.insert(
           0,
@@ -404,175 +388,4 @@ impl ClientController {
       )
     );
   }
-
-  pub fn push_command_buffer(&mut self, command: String) -> () {
-    self.command_buffer.insert(
-      0,
-      command
-      .strip_suffix("\r\n")
-      .or(command.strip_suffix("\n"))
-      .unwrap_or(&command)
-      .to_owned()
-    );
-  }
-
-  /*
-  // Parses all buffered commands within the view.
-  fn parse_command_buffer(&mut self) -> () {
-    while let Some(command) = self.view.get_command_buffer().pop() {
-      let parts: Vec<&str> = command.split(" ").collect::<Vec<&str>>();
-      match self.parse_command(&parts[0], &parts[1..]) {
-        Ok(msg) => self.view.writeln(format!("{}", msg)),
-        Err(e) => self.view.writeln(format!("{}", e))
-      }
-    }
-  }
-
-  /**
-   * Either returns a list of all available commands, or provides specific usage
-   * info about a given command.
-   */
-  fn help(&self, command: Option<&str>) -> Result<String, String> {
-    return match command {
-      None => Ok(
-        "\n
-        help (command): Provides a list of available commands. You can specify \
-        a command after 'help' to view its full usage info.
-        \n
-        restart: Restarts the client. The client must be running.
-        \n
-        start: Starts the client.
-        \n
-        stop: Stops the client and disconnects all connected gamepads.
-        \n
-        exit: Same as 'stop', but totally exits the application.
-        \n
-        set_server_ip 'server_ip': \
-        Sets the server IP to whatever 'server_ip' is. Use 'help set_server_ip \
-        ' for full usage info.
-        \n
-        set_switch_pad 'i' 'switch_pad': \
-        Sets the Switch controller type of the gamepad at slot ('i' + 1). Use \
-        'help set_switch_pad' for full usage info.
-        \n
-        set_input_delay 'i' 'input_delay': \
-        Sets the input delay of the gamepad at slot ('i' + 1). Use 'help \
-        set_input_delay' for full usage info."
-        .to_string()
-      ),
-      Some(keyword) => {
-        match keyword {
-          "help" => Ok(
-            "\n
-            Usage: help (command)
-            \n
-            (command) can be the name of any command.
-            \n
-            Example, if you want to see the usage of 'set_server_ip':
-            \n
-            help set_server_ip"
-            .to_string()
-          ),
-          "restart" => Ok("\nUsage: restart".to_string()),
-          "start" => Ok("\nUsage: start".to_string()),
-          "stop" => Ok("\nUsage: stop".to_string()),
-          "exit" => Ok("\nUsage: exit".to_string()),
-          "set_server_ip" => Ok(
-            "\n
-            Usage: set_server_ip 'server_ip'
-            \n
-            Example, if your Switch's IP is 192.168.1.199:
-            \n
-            set_server_ip 192.168.1.199"
-            .to_string()
-          ),
-          "set_switch_pad" => Ok(
-            "\n
-            Usage: set_switch_pad 'i' 'switch_pad'
-            \n
-            'i' must be either 0 or a positive integer. It also represents the \
-            target index: slot numbers are always equal to 'i' + 1.
-            \n
-            switch_pad must be one of: Disconnected, ProController, \
-            JoyConLSide, or JoyConRSide.
-            \n
-            Example, if you want to set the controller in slot 2 to a sideways \
-            left JoyCon:
-            \n
-            set_switch_pad 1 JoyConLSide"
-            .to_string()
-          ),
-          "set_input_delay" => Ok(
-            "\n
-            Usage: set_input_delay 'i' 'input_delay'
-            \n
-            'i' must be either 0 or a positive integer. It also represents the \
-            target index: slot numbers are always equal to 'i' + 1.
-            \n
-            'input_delay' must be either 0 or a positive integer less than 256.
-            \n
-            Example, if you want to set the input delay of the controller in \
-            slot 3 to 6 frames:
-            \n
-            set_input_delay 2 6"
-            .to_string()
-          ),
-          _ => Err(format!("'{}' is not a valid command.", keyword))
-        }
-      }
-    }
-  }
-
-  /**
-   * Parses a given command. A command is decided by a keyword and its
-   * associated arguments.
-   */
-  fn parse_command(
-    &mut self, keyword: &str, args: &[&str]
-  ) -> Result<String, String> {
-    return match keyword {
-      "help" => {
-        if args.len() >= 1 {
-          return self.help(Some(args[0]));
-        } else {
-          return self.help(None);
-        }
-      },
-      "restart" => self.restart(),
-      "start" => self.start(),
-      "stop" => self.stop(),
-      "exit" => self.exit(),
-      "set_server_ip" => {
-        if args.len() >= 1 {
-          return self.set_server_ip(&args[0].to_string());
-        } else {
-          return Err(self.help(Some("set_server_ip")).unwrap());
-        }
-      },
-      "set_switch_pad" => {
-        if args.len() >= 2 {
-          if let Ok(i) = args[0].parse::<usize>() {
-            if let Ok(switch_pad) = SwitchPad::from_str(args[1]) {
-              return self.set_switch_pad(&i, &switch_pad);
-            }
-          }
-        }
-        return Err(self.help(Some("set_switch_pad")).unwrap());
-      },
-      "set_input_delay" => {
-        if args.len() >= 2 {
-          if let Ok(i) = args[0].parse::<usize>() {
-            if let Ok(input_delay) = args[1].parse::<u8>() {
-              return self.set_input_delay(&i, &input_delay);
-            }
-          }
-        }
-        return Err(self.help(Some("set_input_delay")).unwrap());
-      },
-      _ => Err(format!("'{}' is not a valid command.", keyword))
-    }
-  }
-  */
 }
-
-

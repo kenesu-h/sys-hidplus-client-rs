@@ -11,8 +11,7 @@ use crate::{
     switch::EmulatedPad
   },
   model::ClientModel,
-  controller::ClientController,
-  view::cli::CLIView
+  controller::ClientController
 };
 
 use iced::{
