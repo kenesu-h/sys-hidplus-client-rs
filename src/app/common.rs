@@ -14,6 +14,6 @@ pub enum ClientMessage {
   SetServerIp(String),
   SetSwitchPad(usize, SwitchPad),
   SetInputDelay(usize, u8),
-  SetLeftDeadzone(usize, u8),
-  SetRightDeadzone(usize, u8)
+  SetLeftDeadzone(usize, f32),
+  SetRightDeadzone(usize, f32)
 }

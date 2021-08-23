@@ -211,12 +211,12 @@ impl EmulatedPad {
   }
 
   // Updates this pad using an input event.
-  pub fn update(&mut self, event: &InputEvent) -> () {
+  pub fn update(&mut self, event: &InputEvent, deadzones: &(f32, f32)) -> () {
     match event {
       InputEvent::GamepadButton(_, button, value) => {
         self.update_keyout(button, value)
       },
-      InputEvent::GamepadAxis(_, axis, value) => self.update_axis(axis, value)
+      InputEvent::GamepadAxis(_, axis, value) => self.update_axis(axis, value, deadzones)
     }
   }
 
@@ -240,13 +240,23 @@ impl EmulatedPad {
     }
   }
 
-  // Updates the stick values for an axis.
-  fn update_axis(&mut self, axis: &InputAxis, value: &i16) -> () {
+  // Updates the stick values for an axis while applying deadzones.
+  fn update_axis(&mut self, axis: &InputAxis, value: &i16, deadzones: &(f32, f32)) -> () {
     match axis {
       InputAxis::LeftX => self.left.0 = *value,
       InputAxis::LeftY => self.left.1 = *value,
       InputAxis::RightX => self.right.0 = *value,
       InputAxis::RightY => self.right.1 = *value
+    }
+    if f32::sqrt(
+      ((self.left.0 as i32).pow(2) + (self.left.1 as i32).pow(2)) as f32
+    ) <= deadzones.0 * (i16::MAX as f32) {
+      self.left = (0, 0);
+    }
+    if f32::sqrt(
+      ((self.right.0 as i32).pow(2) + (self.right.1 as i32).pow(2)) as f32
+    ) <= deadzones.1 * (i16::MAX as f32) {
+      self.right = (0, 0);
     }
   }
 

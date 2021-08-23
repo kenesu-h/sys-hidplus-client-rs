@@ -21,7 +21,7 @@ pub enum InputButton {
 }
 
 // Represents the axes that are universally available on gamepads.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum InputAxis {
   LeftX,
   LeftY,
@@ -37,7 +37,7 @@ pub enum InputEvent {
 }
 
 impl InputEvent {
-  // Returns that the gamepad ID of this event.
+  // Getters
   pub fn get_gamepad_id(&self) -> &usize {
     return match self {
       Self::GamepadButton(gamepad_id, _, _) => gamepad_id,

@@ -11,7 +11,9 @@ use serde::{Serialize, Deserialize};
 pub struct Config {
   server_ip: String,
   switch_pads: Vec<SwitchPad>,
-  input_delays: Vec<u8>
+  input_delays: Vec<u8>,
+  left_deadzones: Vec<f32>,
+  right_deadzones: Vec<f32>
   /*
   switch_pad_1: Option<SwitchPad>,
   input_delay_1: i8,
@@ -29,7 +31,9 @@ impl Default for Config {
     return Config {
       server_ip: "".to_string(),
       switch_pads: c!(SwitchPad::ProController, for _i in 0..8),
-      input_delays: c!(0, for _i in 0..8)
+      input_delays: c!(0, for _i in 0..8),
+      left_deadzones: c!(0.0, for _i in 0..8),
+      right_deadzones: c!(0.0, for _i in 0..8)
       /*
       switch_pad_1: Some(SwitchPad::ProController),
       input_delay_1: 0,
@@ -46,12 +50,15 @@ impl Default for Config {
 
 impl Config {
   pub fn new(
-    server_ip: String, switch_pads: Vec<SwitchPad>, input_delays: Vec<u8>
+    server_ip: String, switch_pads: Vec<SwitchPad>, input_delays: Vec<u8>,
+    left_deadzones: Vec<f32>, right_deadzones: Vec<f32>
   ) -> Config {
     return Config {
       server_ip: server_ip,
       switch_pads: switch_pads,
-      input_delays: input_delays
+      input_delays: input_delays,
+      left_deadzones: left_deadzones,
+      right_deadzones: right_deadzones
     }
   }
 
@@ -65,5 +72,13 @@ impl Config {
 
   pub fn get_input_delays(&self) -> &Vec<u8> {
     return &self.input_delays;
+  }
+
+  pub fn get_left_deadzones(&self) -> &Vec<f32> {
+    return &self.left_deadzones;
+  }
+
+  pub fn get_right_deadzones(&self) -> &Vec<f32> {
+    return &self.right_deadzones;
   }
 }

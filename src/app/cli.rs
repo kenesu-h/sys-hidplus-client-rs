@@ -139,7 +139,7 @@ impl CliApp {
           }
         } else {
           return Err(
-            String::from("set_server_ip requires at least two arguments.")
+            String::from("set_switch_pad requires at least two arguments.")
           );
         }
       },
@@ -166,7 +166,61 @@ impl CliApp {
           }
         } else {
           return Err(
-            String::from("set_server_ip requires at least two arguments.")
+            String::from("set_input_delay requires at least two arguments.")
+          );
+        }
+      },
+      "set_left_deadzone" => {
+        if args.len() >= 2 {
+          if let Ok(i) = args[0].parse::<usize>() {
+            if let Ok(deadzone) = args[1].parse::<f32>() {
+              return Ok(ClientMessage::SetLeftDeadzone(i, deadzone))
+            } else {
+              return Err(
+                format!(
+                  "'{}' could not be parsed into an 32-bit float (a decimal).",
+                  args[1]
+                )
+              );
+            }
+          } else {
+            return Err(
+              format!(
+                "'{}' could not be parsed into a natural number (0 or higher).",
+                args[0]
+              )
+            );
+          }
+        } else {
+          return Err(
+            String::from("set_left_deadzone requires at least two arguments.")
+          );
+        }
+      },
+      "set_right_deadzone" => {
+        if args.len() >= 2 {
+          if let Ok(i) = args[0].parse::<usize>() {
+            if let Ok(deadzone) = args[1].parse::<f32>() {
+              return Ok(ClientMessage::SetLeftDeadzone(i, deadzone))
+            } else {
+              return Err(
+                format!(
+                  "'{}' could not be parsed into an 32-bit float (a decimal).",
+                  args[1]
+                )
+              );
+            }
+          } else {
+            return Err(
+              format!(
+                "'{}' could not be parsed into a natural number (0 or higher).",
+                args[0]
+              )
+            );
+          }
+        } else {
+          return Err(
+            String::from("set_right_deadzone requires at least two arguments.")
           );
         }
       },
@@ -191,15 +245,22 @@ impl CliApp {
       ClientMessage::SetServerIp(server_ip) => self.set_server_ip(&server_ip),
       ClientMessage::SetSwitchPad(i, switch_pad) => self.set_switch_pad(&i, &switch_pad),
       ClientMessage::SetInputDelay(i, input_delay) => self.set_input_delay(&i, &input_delay),
-      ClientMessage::Help(maybe_command) => self.help(&maybe_command),
-      _ => ()
+      ClientMessage::SetLeftDeadzone(i, deadzone) => self.set_left_deadzone(&i, &deadzone),
+      ClientMessage::SetRightDeadzone(i, deadzone) => self.set_right_deadzone(&i, &deadzone),
+      ClientMessage::Help(maybe_command) => self.help(&maybe_command)
     }
   }
 
   fn update(&mut self) -> () {
-    match self.controller.update() {
-      Ok(_) => (),
-      Err(e) => self.write_err(e)
+    for result in self.controller.update() {
+      match result {
+        Ok(o) => {
+          if !o.is_empty() {
+            self.write_ok(o);
+          }
+        },
+        Err(e) => self.write_err(e)
+      }
     }
   }
 
@@ -252,6 +313,20 @@ impl CliApp {
     }
   }
 
+  fn set_left_deadzone(&mut self, i: &usize, deadzone: &f32) -> () {
+    match self.controller.set_left_deadzone(i, deadzone) {
+      Ok(o) => self.write_ok(o),
+      Err(e) => self.write_err(e)
+    }
+  }
+
+  fn set_right_deadzone(&mut self, i: &usize, deadzone: &f32) -> () {
+    match self.controller.set_right_deadzone(i, deadzone) {
+      Ok(o) => self.write_ok(o),
+      Err(e) => self.write_err(e)
+    }
+  }
+
   /**
    * Either returns a list of all available commands, or provides specific usage
    * info about a given command.
@@ -281,7 +356,15 @@ impl CliApp {
         \n
         set_input_delay 'i' 'input_delay': \
         Sets the input delay of the gamepad at slot ('i' + 1). Use 'help \
-        set_input_delay' for full usage info."
+        set_input_delay' for full usage info.
+        \n
+        set_left_deadzone 'i' 'deadzone': \
+        Sets the left analog stick deadzone of the gamepad at slot ('i' + 1). \
+        Use 'help set_left_deadzone' for full usage info.
+        \n
+        set_right_deadzone 'i' 'deadzone': \
+        Sets the right analog stick deadzone of the gamepad at slot ('i' + 1). \
+        Use 'help set_left_deadzone' for full usage info."
       ),
       Some(keyword) => {
         match keyword.as_str() {
@@ -335,6 +418,36 @@ impl CliApp {
             slot 3 to 6 frames:
             \n
             set_input_delay 2 6"
+          ),
+          "set_left_deadzone" => println!(
+            "\n
+            Usage: set_left_deadzone 'i' 'deadzone'
+            \n
+            'i' must be either 0 or a positive integer. It also represents the \
+            target index: slot numbers are always equal to 'i' + 1.
+            \n
+            'deadzone' must be a decimal number either equal to 0.0, 1.0, or \
+            somewhere in between.
+            \n
+            Example, if you want to set the deadzone of the controller in slot 6
+            to 75% of the analog stick:
+            \n
+            set_left_deadzone 5 0.75"
+          ),
+          "set_right_deadzone" => println!(
+            "\n
+            Usage: set_right_deadzone 'i' 'deadzone'
+            \n
+            'i' must be either 0 or a positive integer. It also represents the \
+            target index: slot numbers are always equal to 'i' + 1.
+            \n
+            'deadzone' must be a decimal number either equal to 0.0, 1.0, or \
+            somewhere in between.
+            \n
+            Example, if you want to set the deadzone of the controller in slot 6
+            to 75% of the analog stick:
+            \n
+            set_right_deadzone 5 0.75"
           ),
           _ => println!("'{}' is not a valid command.", keyword)
         }

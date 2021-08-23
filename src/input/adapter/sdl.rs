@@ -92,8 +92,7 @@ impl SdlAdapter {
   // Maps an SDL button to an InputButton.
   fn to_button(&self, which: &u32, button: &Button) -> Result<InputButton, String> {
     return match button {
-      /**
-       * TODO: I know it's just a band-aid solution to wrong mappings, but this
+      /* TODO: I know it's just a band-aid solution to wrong mappings, but this
        * could probably be abstracted somehow.
        */
       Button::A => match self.gamepads.get(which) {
@@ -168,10 +167,15 @@ impl SdlAdapter {
   } 
 
   /**
-   * Converts the integer value of an SDL axis event.
+   * Adjusts the integer value of an SDL axis event.
    *
-   * Additionally, the Y-axes for the left and right analog sticks are inverted
-   * so that their inputs are like normal, not-inverted analog sticks.
+   * SDL inverts the Y-axes for the left and right analog sticks, so we need
+   * to invert them to make them more intuitive (up should be positive, down
+   * should be negative). However, since their values are 16-bit integers,
+   * they are within a range of [-32768, 32767]. This means that we'd be
+   * turning -32768 into 32768 upon inversion, which is a problem since it's
+   * outside the range of an i16 (and will crash the client). -32768 is
+   * instead mapped to 32767 as a result.
    */
   fn to_axis_value(&self, axis: &Axis, value: &i16) -> i16 {
     return match axis {

@@ -74,8 +74,12 @@ impl ClientModel {
   }
 
   // Updates a target gamepad in this model using an input event.
-  pub fn update_pad(&mut self, i: &usize, event: &InputEvent) -> () {
-    self.pads[*i].update(event);
+  pub fn update_pad(
+    &mut self, i: &usize,
+    event: &InputEvent,
+    deadzones: &(f32, f32)
+  ) -> () {
+    self.pads[*i].update(event, deadzones);
   }
 
   /**

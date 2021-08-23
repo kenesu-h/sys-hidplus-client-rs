@@ -25,12 +25,14 @@ use std::{
 /**
  * Represents a controller for an input client. The controller is ultimately
  * responsible for accepting user input (especially from gamepads), as well as
- * updating the model and view accordingly. This also means it's responsible for
- * mapping gamepads to individual slots.
+ * updating the model accordingly. This also means it's responsible for mapping
+ * gamepads to individual slots.
  */
 pub struct ClientController {
   switch_pads: Vec<SwitchPad>,
   input_delays: Vec<u8>,
+  left_deadzones: Vec<f32>,
+  right_deadzones: Vec<f32>,
 
   model: ClientModel,
   running: bool,
@@ -52,6 +54,8 @@ impl ClientController {
     return ClientController {
       switch_pads: vec!(),
       input_delays: vec!(),
+      left_deadzones: vec!(),
+      right_deadzones: vec!(),
 
       model: model,
       running: false,
@@ -60,14 +64,17 @@ impl ClientController {
       input_map: HashMap::new(),
       input_buffer: vec!()
     }
-  } 
+  }
 
-  /**
-   * Setters, but these fields should only be set (outside of the controller) by
-   * actually sending commands to the controller. Every time a setter is called,
-   * the current config is saved.
-   */
-  pub fn set_server_ip(&mut self, server_ip: &String) -> Result<String, String> {
+  // A getter for the gamepads; you may need this for the ClientApp layer.
+  pub fn get_pads(&self) -> Vec<EmulatedPad> {
+    return self.model.get_pads();
+  }
+
+  // A bunch of setters, but they'll save the config every time they're used.
+  pub fn set_server_ip(
+    &mut self, server_ip: &String
+  ) -> Result<String, String> {
     self.model.set_server_ip(server_ip);
     return self.save_config();
   }
@@ -83,6 +90,20 @@ impl ClientController {
     &mut self, i: &usize, input_delay: &u8
   ) -> Result<String, String> {
     self.input_delays[*i] = *input_delay;
+    return self.save_config();
+  }
+
+  pub fn set_left_deadzone(
+    &mut self, i: &usize, deadzone: &f32
+  ) -> Result<String, String> {
+    self.left_deadzones[*i] = *deadzone;
+    return self.save_config();
+  }
+
+  pub fn set_right_deadzone(
+    &mut self, i: &usize, deadzone: &f32
+  ) -> Result<String, String> {
+    self.right_deadzones[*i] = *deadzone;
     return self.save_config();
   }
 
@@ -108,6 +129,8 @@ impl ClientController {
         self.model.set_server_ip(config.get_server_ip());
         self.switch_pads = config.get_switch_pads().clone();
         self.input_delays = config.get_input_delays().clone();
+        self.left_deadzones = config.get_left_deadzones().clone();
+        self.right_deadzones = config.get_right_deadzones().clone();
         return Ok("Config successfully loaded.".to_string());
       },
       Err(e) => Err(
@@ -131,7 +154,9 @@ impl ClientController {
     return Config::new(
       self.model.get_server_ip().to_string(),
       self.switch_pads.clone(),
-      self.input_delays.clone()
+      self.input_delays.clone(),
+      self.left_deadzones.clone(),
+      self.right_deadzones.clone()
     );
   }
 
@@ -223,31 +248,28 @@ impl ClientController {
   }
 
   /**
-   * Updates this controller, which then updates the model and view accordingly.
-   * This is also where input events are received and parsed.
+   * Updates this controller, which then updates the model accordingly. This is
+   * also where input events are received and parsed.
    *
    * This should be used at a fixed time interval.
    */
-  pub fn update(&mut self) -> Result<(), String> {
+  pub fn update(&mut self) -> Vec<Result<String, String>> {
+    let mut results: Vec<Result<String, String>> = vec!();
     if self.running { 
-      self.update_inputs();
-      return match self.update_server() {
-        Ok(_) => Ok(()),
-        Err(e) => Err(e)
-      }
-    } else {
-      return Ok(());
+      results.extend(self.update_inputs());
+      results.push(self.update_server());
     }
+    return results;
   }
 
   /**
    * Tells the model to update the input server. If an issue occurs while doing
    * so, the client will attempt to stop and cleanup immediately.
    */
-  fn update_server(&mut self) -> Result<(), String> {
+  fn update_server(&mut self) -> Result<String, String> {
     let mut errors: Vec<String> = vec!();
     match self.model.update_server() {
-      Ok(msg) => return Ok(msg),
+      Ok(_) => return Ok(String::new()),
       Err(e) => {
         errors.push(e);
         if let Err(e_stop) = self.stop() {
@@ -305,11 +327,7 @@ impl ClientController {
         )
       );
     }
-  }
-
-  pub fn get_pads(&self) -> Vec<EmulatedPad> {
-    return self.model.get_pads();
-  }
+  } 
 
   // Fills the input buffer with events from the input adapter.
   fn fill_input_buffer(&mut self) -> () {
@@ -334,7 +352,11 @@ impl ClientController {
     while let Some((event, delay)) = self.input_buffer.pop() {
       if delay == 0 {
         if let Some(i) = self.input_map.get(event.get_gamepad_id()) {
-          self.model.update_pad(&i, &event);
+          self.model.update_pad(
+            &i,
+            &event,
+            &(self.left_deadzones[*i], self.right_deadzones[*i])
+          );
         } else {
           if let InputEvent::GamepadButton(gamepad_id, button, value) = event {
             if button == InputButton::RightBumper && value == 1 {
