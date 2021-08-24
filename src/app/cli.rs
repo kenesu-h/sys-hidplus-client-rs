@@ -97,6 +97,7 @@ impl CliApp {
     return match keyword {
       "start" => Ok(ClientMessage::Start),
       "stop" => Ok(ClientMessage::Stop),
+      "restart" => Ok(ClientMessage::Restart),
       "exit" => Ok(ClientMessage::Exit),
       "set_server_ip" => {
         if args.len() >= 1 {
