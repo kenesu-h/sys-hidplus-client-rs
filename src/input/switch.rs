@@ -52,7 +52,9 @@ pub enum SwitchButton {
   SLL,
   SRL,
   SLR,
-  SRR
+  SRR,
+  Home,
+  Capture
 }
 
 impl SwitchButton {
@@ -87,7 +89,9 @@ impl SwitchButton {
       Self::SLL => return 1 << 24,
       Self::SRL => return 1 << 25,
       Self::SLR => return 1 << 26,
-      Self::SRR => return 1 << 27
+      Self::SRR => return 1 << 27,
+      Self::Home => return 1 << 18,
+      Self::Capture => return 1 << 19
     }
   }
 
@@ -100,6 +104,8 @@ impl SwitchButton {
     button: &InputButton, switch_pad: &SwitchPad
   ) -> Result<SwitchButton, String> {
     match button {
+      InputButton::Guide => Ok(Self::Home),
+
       InputButton::DPadUp => Ok(Self::DU),
       InputButton::DPadRight => Ok(Self::DR),
       InputButton::DPadDown => Ok(Self::DD),
