@@ -63,7 +63,7 @@ For information on this, please consult [the Build page](./docs/build.md).
 
 # Known Issues
 - Sideways Joy-Con support is limited.
-  [This is out of our control for the most part.](https://github.com/switchbrew/libnx/issues/5)
+  [This is out of our control for the most part.](https://github.com/switchbrew/libnx/issues/567)
 - sys-hidplus is known to have input delay in demanding games. I don't have any
   games to personally test this with, but initial obstacles in development seem
   to support this; namely, input delay was present when inputs were sent at a

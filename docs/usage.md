@@ -158,7 +158,7 @@ Either way, a few warnings:
   can literally just stop then start) for the changes to take effect.
 - The SL and SR buttons on sideways Joy-Cons will not work. This is
   unfortunately out of our control unless libnx implements it, but
-  [it doesn't look like that'll happen](https://github.com/switchbrew/libnx/issues/56).
+  [it doesn't look like that'll happen](https://github.com/switchbrew/libnx/issues/567).
   As a result, it's impossible at the moment to implement full sideways Joy-Con
   support.
 - A sideways Joy-Con may be connected as an incomplete pair of Joy-Cons. While I
