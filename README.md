@@ -38,16 +38,17 @@ functionality. As such, keep in mind that this client will likely have
 different features from Pask's client, which may or may not be
 cross-platform-friendly.
 
-For both Pask and I's convenience - so we can bounce ideas off each other -
-here's some of the differences my client has (that come to mind):
+To bounce ideas off each other - and for your own convenience - here's the
+differences between our clients (that come to mind):
 - Is a command line application. This is nowhere as easy to use compared to a
-  GUI, and will likely be swapped out in the future.
+  GUI, which is in development but might not complete for a while.
 - Settings are done from a single configuration file, but can be edited through
   the client itself.
 - Users press a button (right bumper) to assign their controller to a slot. This
   is a QOL change and is intended to give users more control over slot mappings.
 - Artificial input delay can be added to individual controller slots.
 - Supports up to 8 controllers through SDL.
+- The home button can be used by emulated controllers.
 
 Here's some of the differences that Pask's client has to my knowledge:
 - Is not command line-based; uses a GUI.
