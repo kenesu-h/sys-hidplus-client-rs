@@ -17,7 +17,8 @@ pub struct Config {
   switch_pads: Vec<SwitchPad>,
   input_delays: Vec<u8>,
   left_deadzones: Vec<f32>,
-  right_deadzones: Vec<f32>
+  right_deadzones: Vec<f32>,
+  anarchy_mode: bool
 }
 
 impl Default for Config {
@@ -27,7 +28,8 @@ impl Default for Config {
       switch_pads: c!(SwitchPad::ProController, for _i in 0..8),
       input_delays: c!(0, for _i in 0..8),
       left_deadzones: c!(0.0, for _i in 0..8),
-      right_deadzones: c!(0.0, for _i in 0..8)
+      right_deadzones: c!(0.0, for _i in 0..8),
+      anarchy_mode: false
     }
   }
 }
@@ -35,14 +37,15 @@ impl Default for Config {
 impl Config {
   pub fn new(
     server_ip: String, switch_pads: Vec<SwitchPad>, input_delays: Vec<u8>,
-    left_deadzones: Vec<f32>, right_deadzones: Vec<f32>
+    left_deadzones: Vec<f32>, right_deadzones: Vec<f32>, anarchy_mode: bool
   ) -> Config {
     return Config {
       server_ip: server_ip,
       switch_pads: switch_pads,
       input_delays: input_delays,
       left_deadzones: left_deadzones,
-      right_deadzones: right_deadzones
+      right_deadzones: right_deadzones,
+      anarchy_mode: anarchy_mode
     }
   }
 
@@ -64,5 +67,9 @@ impl Config {
 
   pub fn get_right_deadzones(&self) -> &Vec<f32> {
     return &self.right_deadzones;
+  }
+
+  pub fn get_anarchy_mode(&self) -> &bool {
+    return &self.anarchy_mode;
   }
 }

@@ -204,6 +204,23 @@ impl EmulatedPad {
     return &self.right;
   }
 
+  // Setters
+  pub fn set_switch_pad(&mut self, switch_pad: &SwitchPad) -> () {
+    self.switch_pad = *switch_pad;
+  }
+
+  pub fn set_keyout(&mut self, keyout: &i32) -> () {
+    self.keyout = *keyout;
+  }
+
+  pub fn set_left(&mut self, left: &(i16, i16)) -> () {
+    self.left = *left;
+  }
+
+  pub fn set_right(&mut self, right: &(i16, i16)) -> () {
+    self.right = *right;
+  }
+
   // Connects this pad by assigning a Switch pad.
   pub fn connect(&mut self, switch_pad: SwitchPad) -> () {
     self.switch_pad = switch_pad;

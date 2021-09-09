@@ -38,6 +38,7 @@ pub struct ClientController {
   input_delays: Vec<u8>,
   left_deadzones: Vec<f32>,
   right_deadzones: Vec<f32>,
+  anarchy_mode: bool,
 
   model: ClientModel,
   running: bool,
@@ -61,6 +62,7 @@ impl ClientController {
       input_delays: vec!(),
       left_deadzones: vec!(),
       right_deadzones: vec!(),
+      anarchy_mode: false,
 
       model: model,
       running: false,
@@ -112,6 +114,16 @@ impl ClientController {
     return self.save_config();
   }
 
+  // Functionally the same as the rest of the setters, but clears all gamepads.
+  pub fn set_anarchy_mode(&mut self, anarchy_mode: &bool) -> Result<String, String> {
+    self.anarchy_mode = *anarchy_mode;
+    self.input_map.clear();
+    for i in 0..8 {
+      self.model.disconnect_pad(&i);
+    }
+    return self.save_config();
+  }
+
   /**
    * Initializes this controller with a greeting message, and by loading a
    * config.
@@ -136,6 +148,7 @@ impl ClientController {
         self.input_delays = config.get_input_delays().clone();
         self.left_deadzones = config.get_left_deadzones().clone();
         self.right_deadzones = config.get_right_deadzones().clone();
+        self.anarchy_mode = config.get_anarchy_mode().clone();
         return Ok("Config successfully loaded.".to_string());
       },
       Err(e) => Err(
@@ -161,7 +174,8 @@ impl ClientController {
       self.switch_pads.clone(),
       self.input_delays.clone(),
       self.left_deadzones.clone(),
-      self.right_deadzones.clone()
+      self.right_deadzones.clone(),
+      self.anarchy_mode.clone()
     );
   }
 
@@ -273,7 +287,7 @@ impl ClientController {
    */
   fn update_server(&mut self) -> Result<String, String> {
     let mut errors: Vec<String> = vec!();
-    match self.model.update_server() {
+    match self.model.update_server(&self.anarchy_mode, &self.input_map) {
       Ok(_) => return Ok(String::new()),
       Err(e) => {
         errors.push(e);

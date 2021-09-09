@@ -179,13 +179,7 @@ impl SdlAdapter {
    */
   fn to_axis_value(&self, axis: &Axis, value: &i16) -> i16 {
     return match axis {
-      Axis::LeftY | Axis::RightY => {
-        if value == &i16::MIN {
-          return i16::MAX;
-        } else {
-          return -value;
-        }
-      },
+      Axis::LeftY | Axis::RightY => i16::saturating_mul(*value, -1),
       _ => *value
     }
   } 

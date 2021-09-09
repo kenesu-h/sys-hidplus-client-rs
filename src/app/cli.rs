@@ -121,7 +121,7 @@ impl CliApp {
         if args.len() >= 2 {
           if let Ok(i) = args[0].parse::<usize>() {
             if let Ok(switch_pad) = SwitchPad::from_str(args[1]) {
-              return Ok(ClientMessage::SetSwitchPad(i, switch_pad))
+              return Ok(ClientMessage::SetSwitchPad(i, switch_pad));
             } else {
               return Err(
                 format!(
@@ -148,7 +148,7 @@ impl CliApp {
         if args.len() >= 2 {
           if let Ok(i) = args[0].parse::<usize>() {
             if let Ok(input_delay) = args[1].parse::<u8>() {
-              return Ok(ClientMessage::SetInputDelay(i, input_delay))
+              return Ok(ClientMessage::SetInputDelay(i, input_delay));
             } else {
               return Err(
                 format!(
@@ -175,7 +175,7 @@ impl CliApp {
         if args.len() >= 2 {
           if let Ok(i) = args[0].parse::<usize>() {
             if let Ok(deadzone) = args[1].parse::<f32>() {
-              return Ok(ClientMessage::SetLeftDeadzone(i, deadzone))
+              return Ok(ClientMessage::SetLeftDeadzone(i, deadzone));
             } else {
               return Err(
                 format!(
@@ -202,7 +202,7 @@ impl CliApp {
         if args.len() >= 2 {
           if let Ok(i) = args[0].parse::<usize>() {
             if let Ok(deadzone) = args[1].parse::<f32>() {
-              return Ok(ClientMessage::SetLeftDeadzone(i, deadzone))
+              return Ok(ClientMessage::SetLeftDeadzone(i, deadzone));
             } else {
               return Err(
                 format!(
@@ -225,6 +225,24 @@ impl CliApp {
           );
         }
       },
+      "set_anarchy_mode" => {
+        if args.len() >= 1 {
+          if let Ok(anarchy_mode) = args[0].parse::<bool>() {
+            return Ok(ClientMessage::SetAnarchyMode(anarchy_mode));
+          } else {
+            return Err(
+              format!(
+                "'{}' could not be parsed into a bool ('true' or 'false').",
+                args[0]
+              )
+            )
+          }
+        } else {
+          return Err(
+            String::from("set_anarchy_mode requires at least one argument.")
+          );
+        }
+      }
       "help" => {
         if args.len() >= 1 {
           return Ok(ClientMessage::Help(Some(String::from(args[0]))));
@@ -243,12 +261,13 @@ impl CliApp {
       ClientMessage::Stop => self.stop(),
       ClientMessage::Restart => self.restart(),
       ClientMessage::Exit => self.exit(),
+      ClientMessage::Help(maybe_command) => self.help(&maybe_command),
       ClientMessage::SetServerIp(server_ip) => self.set_server_ip(&server_ip),
       ClientMessage::SetSwitchPad(i, switch_pad) => self.set_switch_pad(&i, &switch_pad),
       ClientMessage::SetInputDelay(i, input_delay) => self.set_input_delay(&i, &input_delay),
       ClientMessage::SetLeftDeadzone(i, deadzone) => self.set_left_deadzone(&i, &deadzone),
-      ClientMessage::SetRightDeadzone(i, deadzone) => self.set_right_deadzone(&i, &deadzone),
-      ClientMessage::Help(maybe_command) => self.help(&maybe_command)
+      ClientMessage::SetRightDeadzone(i, deadzone) => self.set_right_deadzone(&i, &deadzone), 
+      ClientMessage::SetAnarchyMode(anarchy_mode) => self.set_anarchy_mode(&anarchy_mode)
     }
   }
 
@@ -328,6 +347,13 @@ impl CliApp {
     }
   }
 
+  fn set_anarchy_mode(&mut self, anarchy_mode: &bool) -> () {
+    match self.controller.set_anarchy_mode(anarchy_mode) {
+      Ok(o) => self.write_ok(o),
+      Err(e) => self.write_err(e)
+    }
+  }
+
   /**
    * Either returns a list of all available commands, or provides specific usage
    * info about a given command.
@@ -365,7 +391,11 @@ impl CliApp {
         \n
         set_right_deadzone 'i' 'deadzone': \
         Sets the right analog stick deadzone of the gamepad at slot ('i' + 1). \
-        Use 'help set_left_deadzone' for full usage info."
+        Use 'help set_left_deadzone' for full usage info.
+        \n
+        set_anarchy_mode 'anarchy_mode': \
+        Sets whether anarchy mode is enabled. Use 'help set_anarchy_mode' for \
+        full usage info."
       ),
       Some(keyword) => {
         match keyword.as_str() {
@@ -449,6 +479,16 @@ impl CliApp {
             to 75% of the analog stick:
             \n
             set_right_deadzone 5 0.75"
+          ),
+          "set_anarchy_mode" => println!(
+            "\n
+            Usage: set_anarchy_mode 'anarchy_mode'
+            \n
+            'anarchy_mode' must be either 'true' or 'false'.
+            \n
+            Example, if you want to enable anarchy mode:
+            \n
+            set_anarchy_mode true"
           ),
           _ => println!("'{}' is not a valid command.", keyword)
         }

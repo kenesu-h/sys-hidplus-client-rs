@@ -26,5 +26,6 @@ pub enum ClientMessage {
   SetSwitchPad(usize, SwitchPad),
   SetInputDelay(usize, u8),
   SetLeftDeadzone(usize, f32),
-  SetRightDeadzone(usize, f32)
+  SetRightDeadzone(usize, f32),
+  SetAnarchyMode(bool)
 }

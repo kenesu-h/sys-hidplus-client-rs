@@ -9,6 +9,7 @@ use crate::{
 };
 
 use std::{
+  collections::HashMap,
   net::UdpSocket,
   time
 };
@@ -97,9 +98,36 @@ impl ClientModel {
   }
 
   // Sends the current emulated pad states to the input server.
-  pub fn update_server(&self) -> Result<(), String> {
+  pub fn update_server(&self, anarchy_mode: &bool, input_map: &HashMap<usize, usize>) -> Result<(), String> {
+    let to_send: PackedData;
+    if *anarchy_mode && input_map.len() > 0 {
+      let mut pads: Vec<EmulatedPad> = c![EmulatedPad::new(), for _i in 0..8];
+      
+      let mut keyout: i32 = 0;
+      let mut left: (i16, i16) = (0, 0);
+      let mut right: (i16, i16) = (0, 0);
+      for (_, i) in input_map {
+        let pad: EmulatedPad = self.pads[*i];
+        keyout = keyout | pad.get_keyout();
+        left = (
+          i16::saturating_add(left.0, pad.get_left().0),
+          i16::saturating_add(left.1, pad.get_left().1)
+        );
+        right = (
+          i16::saturating_add(right.0, pad.get_right().0),
+          i16::saturating_add(right.1, pad.get_right().1)
+        );
+      }
+      pads[0].set_switch_pad(&SwitchPad::ProController);
+      pads[0].set_keyout(&keyout);
+      pads[0].set_left(&left);
+      pads[0].set_right(&right);
+      to_send = PackedData::new(&pads, 8);
+    } else {
+      to_send = PackedData::new(&self.pads, 8);
+    }
     match self.sock.send_to(
-      &PackedData::new(&self.pads, 8).to_bytes(),
+      &to_send.to_bytes(),
       format!("{}:8000", self.server_ip)
     ) {
       Ok(_) => Ok(()),
