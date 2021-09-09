@@ -59,6 +59,10 @@ Here's some of the differences that Pask's client has to my knowledge:
 For information on this, please consult
 [the Installation & Usage page](./docs/usage.md).
 
+# Parsec Usage
+If you want to setup sys-hidplus to allow for remote play of your Switch, please
+consult [the Parsec page](./docs/parsec.md).
+
 # Build from Source
 For information on this, please consult [the Build page](./docs/build.md).
 
