@@ -126,8 +126,16 @@ on wi-fi.
 There are also a ton of factors that can contribute to this, but one of the most
 common reasons for this can be if either the client or the host are behind a
 strict firewall. University networks tend to have this, and will prevent clients
-from connecting to a host and vice-versa. The person on the network in question
-can use a VPN to circumvent the firewall, but this will likely add input delay.
+from connecting to a host and vice-versa.
+
+The person on the network in question can use a VPN to circumvent the firewall,
+but this will likely add input delay.
+
 It also might be possible for the host to attempt
 [port-forwarding for Parsec](https://support.parsec.app/hc/en-us/articles/360003146251-Starting-Port-On-The-Hosting-Computer)
 but I personally haven't had any success with this.
+
+I have, however, had success with using
+[Moonlight](https://moonlight-stream.org/) to host. While this requires the host
+to have an NVIDIA GPU and limits the amount of connections to just one, it is a
+confirmed way to circumvent this issue.
