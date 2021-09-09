@@ -23,10 +23,15 @@ use std::{
 };
 
 /**
- * Represents a controller for an input client. The controller is ultimately
- * responsible for accepting user input (especially from gamepads), as well as
- * updating the model accordingly. This also means it's responsible for mapping
- * gamepads to individual slots.
+ * Represents a controller for an input client.
+ *
+ * Controllers are responsible for accepting user input (especially from
+ * gamepads) and updating the model accordingly. The way user input is handled
+ * can generally depend on configurations like input delays and deadzones.
+ *
+ * Controllers are also intended to be used by application structs as a means
+ * to perform operations with the client, such as starting and connecting it
+ * to a Switch, or changing configurations.
  */
 pub struct ClientController {
   switch_pads: Vec<SwitchPad>,
@@ -66,8 +71,8 @@ impl ClientController {
     }
   }
 
-  // A getter for the gamepads; you may need this for the ClientApp layer.
-  pub fn get_pads(&self) -> Vec<EmulatedPad> {
+  // A getter for the gamepads; you may need this for application structs.
+  pub fn get_pads(&self) -> &Vec<EmulatedPad> {
     return self.model.get_pads();
   }
 
@@ -229,7 +234,7 @@ impl ClientController {
    * successfully exit. Unsuccessfully exiting entails an error occurring during
    * the stopping process.
    *
-   * While we could just directly exit here, sometimes the ClientApp layer has
+   * While we could just directly exit here, sometimes application structs have
    * things to clean up to ensure... well, a clean exit.
    */
   pub fn exit_prep(&mut self) -> Result<(), String> {

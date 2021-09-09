@@ -27,7 +27,7 @@ use std::{
 };
 
 /**
- * Representing a cross-platform input adapter that will read from an SDL
+ * Represents a cross-platform input adapter that will read from an SDL
  * instance.
  * 
  * SDL so far seems to bypass the 4 XInput controller limit and supports both

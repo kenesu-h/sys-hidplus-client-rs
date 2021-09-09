@@ -60,7 +60,6 @@ pub enum SwitchButton {
 impl SwitchButton {
   // Returns the bit corresponding to this button.
   pub fn value(&self) -> i32 {
-    // TODO: Home button cannot be emulated until libnx adds support.
     match self {
       Self::A => return 1,
       Self::B => return 1 << 1,
@@ -103,9 +102,7 @@ impl SwitchButton {
   pub fn map_button(
     button: &InputButton, switch_pad: &SwitchPad
   ) -> Result<SwitchButton, String> {
-    match button {
-      InputButton::Guide => Ok(Self::Home),
-
+    match button { 
       InputButton::DPadUp => Ok(Self::DU),
       InputButton::DPadRight => Ok(Self::DR),
       InputButton::DPadDown => Ok(Self::DD),
@@ -154,7 +151,8 @@ impl SwitchButton {
         SwitchPad::JoyConLSide => Ok(Self::DU),
         SwitchPad::JoyConRSide => Ok(Self::B)
       },
-      InputButton::Guide => Err(String::from("No map for the guide button."))
+
+      InputButton::Guide => Ok(Self::Home)
     }
   }
 }

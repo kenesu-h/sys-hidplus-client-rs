@@ -180,7 +180,7 @@ impl Application for IcedApp {
       .height(Length::Fill)
       .padding(10);
 
-    let pads: Vec<EmulatedPad> = self.controller.get_pads();
+    let pads: &Vec<EmulatedPad> = self.controller.get_pads();
     let mut gamepad_rows: Column<ClientMessage> = Column::new()
       .spacing(10);
     let mut gamepad_row: Row<ClientMessage> = Row::new().spacing(10);

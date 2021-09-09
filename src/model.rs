@@ -7,15 +7,19 @@ use crate::{
     }
   }
 };
+
 use std::{
   net::UdpSocket,
   time
 };
 
 /**
- * Represents a model for an input client. The model is responsible for keeping
- * track of the emulated gamepads and sending their states over to the input
- * server - or in other words, a Nintendo Switch.
+ * Represents a model for an input client.
+ * 
+ * Models are generally responsible for the representation of emulated
+ * gamepads and communication with an input server - or a Nintendo Switch.
+ * The model should be fed updates to emulated gamepads by a controller struct,
+ * and continuously update the Switch about the current gamepad states.
  */
 pub struct ClientModel {
   server_ip: String,
@@ -52,9 +56,9 @@ impl ClientModel {
     self.server_ip = String::from(server_ip);
   }
 
-  // Gamepads Getter, but it's worth noting that this clones the list.
-  pub fn get_pads(&self) -> Vec<EmulatedPad> {
-    return self.pads.clone();
+  // Gamepads Getter
+  pub fn get_pads(&self) -> &Vec<EmulatedPad> {
+    return &self.pads;
   }
 
   // Returns the number of emulated gamepads in this model.
@@ -111,7 +115,7 @@ impl ClientModel {
    * Disconnects all connected gamepads through an unfortunately-brute-force
    * method.
    *
-   * Without an established protocol, this seems to be the only way to
+   * Without an established TCP-based protocol, this seems to be the only way to
    * disconnect everything reliably.
    */
   pub fn cleanup(&mut self) -> Result<String, String> {
@@ -137,7 +141,7 @@ impl ClientModel {
  * 
  * This isn't the cleanest or most dynamic thing by any means, and the memory
  * use definitely isn't optimized. However, I wanted it to be consistent with
- * the original data structure.
+ * the original data structure and the struct to be sent over the network..
  */
 pub struct PackedData {
   magic: u16,
