@@ -13,7 +13,7 @@ Switch before you can use my client.
 1. Download the latest version of the sys-hidplus sysmodule from
    [the releases page](https://github.com/kenesu-h/sys-hidplus/releases).
 2. Using a file archiver, extract the contents of the latest release's archive
-   into the root of your Switch's SD card.
+   into the root of your Switch's SD card. Overwrite files if asked.
 3. If your Switch is already running, reboot into CFW.
 
 ## sys-hidplus-client-rs
@@ -41,17 +41,21 @@ Follow the steps in this section every time you want to startup the client.
 ### Windows
 You can run the executable directly without any issues.
 
-### Mac OS and Linux
-If you cannot directly run the executable, you're going to have to run the
-client using your OS's terminal/shell.
+### All Operating Systems
+If you cannot directly run the executable or you want to run the command line
+interface, you're going to have to run the client using your OS's terminal/shell.
 
 #### Directions
 1. Open your terminal/shell and navigate to the directory containing your
    executable.
 2. Run the following: `./client-rs`
-   - If the above doesn't work, you may have to run the following to make it
-     executable: `chmod +x client-rs`. Try to run the executable again
-     afterwards.
+  - For Windows, you may have to do `./client-rs.exe` or just `client-rs.exe`.
+  - If the above doesn't work, you may have to run the following to make it
+    executable: `chmod +x client-rs`. Try to run the executable again
+    afterwards.
+
+If you want to run the command line interface, run the executable with the
+following argument: `-- cli`.
 
 
 ## First-Time Setup
@@ -82,7 +86,7 @@ they aren't, you may not be able to make a connection. An ethernet connection
 for both will likely lead to the best results.**
 
 ### GUI
-If you're using the client GUI, simply click the "Start" button on the side.
+If you're using the client GUI, simply click the "Start Client" button.
 
 ### Command Line
 If you're using the command line, use the command `start`.
@@ -136,8 +140,8 @@ a slot to a sideways Joy-Con and giving it artificial input delay.
 ### Controller Types
 
 #### GUI
-If you're using the client GUI, use the respective controller's dropdown box to
-select your desired controller type.
+If you're using the client GUI, you're currently unable to change a controller's
+type since the GUI library I used doesn't support dropdown menus.
 
 #### Command Line
 If you're using the command line, use the `set_switch_pad 'i' 'switch_pad'`
@@ -178,6 +182,20 @@ must be a positive number.
 
 Unlike changing controller types, you don't need to restart the client for the
 changes to work.
+
+### Deadzones
+You can also set the analog stick deadzones of a controller slot.
+
+#### GUI
+Like usual, use the respective slider to set a controller's deadzone.
+
+#### Command Line
+If you're using the command line, use the `set_left_deadzone 'i' 'deadzone'` or
+`set_right_deadzone 'i' 'deadzone'` commands as needed. 'i' must be the index of
+the slot you want to change, and 'deadzone' should be a decimal between 0.0 and
+1.0.
+
+You don't need to restart the client for this to work either.
 
 ## Controller Compatibility
 These controllers are confirmed to be practically plug-and-play:

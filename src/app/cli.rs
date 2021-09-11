@@ -300,9 +300,9 @@ impl CliApp {
       ClientMessage::SetRightDeadzone(i, deadzone) => self.set_right_deadzone(&i, &deadzone), 
       ClientMessage::SetAnarchyMode(anarchy_mode) => self.set_anarchy_mode(&anarchy_mode),
       ClientMessage::ServerIPInputChanged(_) => (),
-      ClientMessage::InputDelayInputChanged(_, _) => (),
-      ClientMessage::LeftDeadzoneInputChanged(_, _) => (),
-      ClientMessage::RightDeadzoneInputChanged(_, _) => (),
+      ClientMessage::InputDelayInputChanged(_) => (),
+      ClientMessage::LeftDeadzoneInputChanged(_) => (),
+      ClientMessage::RightDeadzoneInputChanged(_) => (),
       ClientMessage::TrySetAll(_, _, _, _) => (),
       ClientMessage::ScreenChanged(_) => ()
     }

@@ -1,24 +1,17 @@
 use crate::{
   app::{
     common::{ClientApp, ClientMessage, ClientScreen},
-    iced::{
-      style,
-      widget::GamepadDisplay
-    }
+    iced::style
   },
-  input::{
-    adapter::sdl::SdlAdapter,
-    switch::EmulatedPad
-  },
+  input::adapter::sdl::SdlAdapter,
   model::ClientModel,
   controller::ClientController
 };
 
 use iced::{
-  Align, HorizontalAlignment,
+  Align,
   button, Button,
   tooltip::{self, Tooltip},
-  canvas::{self, Cache, Canvas, Cursor, Geometry},
   executor, Application, Clipboard, Column, Command, Container, Element, Length,
   Row,
   slider, Slider,
@@ -364,8 +357,6 @@ impl IcedApp {
   } 
 
   fn view_gamepad_config(&mut self, i: &usize) -> Element<ClientMessage> {
-    let i_clone: usize = i.clone();
-
     let mut rows: Column<ClientMessage> = Column::new()
       .width(Length::Fill)
       .height(Length::Fill)
@@ -391,7 +382,7 @@ impl IcedApp {
         "Value must be in range [0 to 255].",
         &self.value_input_delay,
         move |maybe_input_delay| {
-          ClientMessage::InputDelayInputChanged(i_clone, maybe_input_delay)
+          ClientMessage::InputDelayInputChanged(maybe_input_delay)
         }
       )
         .style(self.theme)
@@ -421,10 +412,7 @@ impl IcedApp {
         0..=100,
         self.value_left_deadzone,
         move |deadzone| {
-          ClientMessage::LeftDeadzoneInputChanged(
-            i_clone,
-            deadzone as f32 / 100.0
-          )
+          ClientMessage::LeftDeadzoneInputChanged(deadzone as f32 / 100.0)
         }
       )
         .style(self.theme)
@@ -466,10 +454,7 @@ impl IcedApp {
         0..=100,
         self.value_right_deadzone,
         move |deadzone| {
-          ClientMessage::RightDeadzoneInputChanged(
-            i_clone,
-            deadzone as f32 / 100.0
-          )
+          ClientMessage::RightDeadzoneInputChanged(deadzone as f32 / 100.0 )
         }
       )
         .style(self.theme)
@@ -507,7 +492,7 @@ impl IcedApp {
         .width(Length::Shrink)
         .on_press(
           ClientMessage::TrySetAll(
-            i_clone,
+            *i,
             self.value_input_delay.clone(),
             self.value_left_deadzone.clone() as f32 / 100.0,
             self.value_right_deadzone.clone() as f32 / 100.0
@@ -536,14 +521,20 @@ impl IcedApp {
 
 impl ClientApp for IcedApp {
   fn initialize() -> () {
-    Self::run(Settings {
+    match Self::run(Settings {
       antialiasing: true,
       window: window::Settings {
         size: (640, 480),
         ..window::Settings::default()
       },
       ..Settings::default()
-    });
+    }) {
+      Ok(_) => (),
+      Err(e) => panic!(
+        "Initializing the client resulted in the following error: {}",
+        e
+      )
+    }
   }
 }
 
@@ -656,17 +647,14 @@ impl Application for IcedApp {
       ClientMessage::ServerIPInputChanged(server_ip) => {
         self.value_server_ip = server_ip;
       },
-      ClientMessage::InputDelayInputChanged(i, maybe_input_delay) => {
+      ClientMessage::InputDelayInputChanged(maybe_input_delay) => {
         self.value_input_delay = maybe_input_delay;
-        
       },
-      ClientMessage::LeftDeadzoneInputChanged(i, deadzone) => {
+      ClientMessage::LeftDeadzoneInputChanged(deadzone) => {
         self.value_left_deadzone = (deadzone * 100.0) as u8;
-        
       },
-      ClientMessage::RightDeadzoneInputChanged(i, deadzone) => {
+      ClientMessage::RightDeadzoneInputChanged(deadzone) => {
         self.value_right_deadzone = (deadzone * 100.0) as u8;
-        
       },
       ClientMessage::ScreenChanged(screen) => {
         self.screen = screen.clone();

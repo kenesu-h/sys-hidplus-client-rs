@@ -9,7 +9,7 @@ sys-hidplus is a sysmodule for a Nintendo Switch hacked to run custom firmware.
 A sysmodule can be seen as a background service like those on most computers.
 This sysmodule allows the Switch to receive controller inputs sent by a computer
 using a client. In other words, gamepads can be used for a Switch over a network
-rather than through a direct USB or Bluetooth connection. This in turn enables
+rather than through a direct USB or Bluetooth connection. This in turn allows
 users to use normally unsupported controllers - such as Xbox and PS4
 controllers, or even keyboards - although similar functionality is provided by:
 - [sys-con](https://github.com/cathery/sys-con), which offers USB connectivity
@@ -29,31 +29,58 @@ to add some new features. Pask is aware of this client and is fine with its
 continued development.
 
 # Foreword
-While Pask has also
+Pask has also
 [rewritten their original client using C#](https://github.com/PaskaPinishkes/SwitchSysHidplusClient),
-they suspect it may only work for Windows. I intend to continue working on this
-client to support Macs and Linux machines. I also want to use this opportunity
-as a learning experience and an outlet to implement more experimental
-functionality. As such, keep in mind that this client will likely have
-different features from Pask's client, which may or may not be
-cross-platform-friendly.
+but they suspect that it may only work for Windows. For the time being, I plan
+to continue working on this client to support Mac and Linux computers, and as a
+learning experience for myself. Most of all however, I want to use this as an
+outlet to implement and test more experimental features, which Pask could add
+to their client at a later point once we find that they're stable. **I want to
+stress that as a result, this is NOT meant to be a replacement for Pask's work,
+but rather an alternative for those who want to use these experimental features
+and don't mind the possibility of something breaking.**
 
-To bounce ideas off each other - and for your own convenience - here's the
-differences between our clients (that come to mind):
-- Is a command line application. This is nowhere as easy to use compared to a
-  GUI, which is in development but might not complete for a while.
-- Settings are done from a single configuration file, but can be edited through
-  the client itself.
-- Users press a button (right bumper) to assign their controller to a slot. This
-  is a QOL change and is intended to give users more control over slot mappings.
-- Artificial input delay can be added to individual controller slots.
-- Supports up to 8 controllers through SDL.
-- The home button can be used by emulated controllers.
+## What could break?
+I know I made it sound scary, but there shouldn't be anything that could do
+permanent damage to your computer or your Switch. While there is a possibility
+that something bad could happen, I didn't come across any fatal problems after
+over a month of testing and on-and-off usage, not even when crashes happened.
+Even then, there was a time where the client crashed and the last input I made
+hung - in other words, I was holding A as the client crashed and the sysmodule
+continued to act as if I were still holding A. This was just fixed by
+restarting and reconnecting the client though. I've also never seen the
+sysmodule or my Switch crash, but you could just uninstall the sysmodule if that
+ever happened.
 
-Here's some of the differences that Pask's client has to my knowledge:
-- Is not command line-based; uses a GUI.
-- Controllers are automatically assigned when connected and disconnected.
-- Has anarchy mode, where everyone uses the same controller.
+If you aren't deterred by any of that, read onto the next few sections for
+details about new features, installation, usage, and setup with Parsec:
+ 
+## New Features
+As of 1.1.0-alpha.4, here are the new features that this client has:
+- Support for up to 8 controllers, allowing you to take advantage of Smash's
+  8-player mode.
+- The home button is usable by controllers.
+- You can configure these settings for individual controller slots:
+  - Artificial input delay, useful for putting yourself at an even playing
+    field with those who have some input delay playing through Parsec.
+  - Left and right analog stick deadzones, useful for eliminating controller
+    drift and helping stick flicks get recognized more easily.
+- These settings are saved to a file and loaded for every client session.
+- Users press a button (right bumper) to assign their controller to the first
+  open slot. This is a QOL change and is intended to give users more control
+  over which controller goes into what slot.
+
+## Potential Problems
+These are potential problems my forked sysmodule and client may have. It would
+be appreciated if people could test these scenarios and report any appropriate
+information.
+- Using the GUI may increase input delay.
+  - The command line interface, however, is available for use as an alternative
+    and will likely have minimal input delay in comparison.
+- Input delay may increase with an increased amount of players.
+  - I have only tested with with four concurrent players at most, but there was
+    no noticeable input delay. However, this may not be the same case for more
+    than four players, as well as hosts with weaker computers.
 
 # Installation & Usage
 For information on this, please consult
@@ -80,9 +107,6 @@ For information on this, please consult [the Build page](./docs/build.md).
   but I'm not totally sure. Either way, it's possible a future sys-hidplus 
   update can resolve this, but until then, try to avoid any menus and options
   that forcibly disconnect controllers (if you can).
-- The command line interface will fail to recognize commands if you use arrow
-  keys. I'm personally not sure how to fix this, but for now, try to avoid using
-  any arrow keys.
 
 # Contact
 If you want to contact me, you can reach me at:
@@ -98,7 +122,8 @@ Special thanks go to:
 - PaskaPinishes for sys-hidplus and their clients, as well as everyone who
   helped them out. I literally would not be working on this project if it
   weren't for them.
-- Kemosahbee for testing the client and reporting bugs. Many critical bugs were
-  found thanks to him and his testing efforts.
+- Kemosahbee for testing the client, reporting bugs, and giving suggestions as
+  well as feedback. Many important bugs were found thanks to him and his testing
+  efforts.
 - cathery for their sysmodule sys-con, which helped me figure out how to emulate
   the home button.

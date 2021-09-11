@@ -1,4 +1,5 @@
 release/
 target/
+ignore/
 config.toml
 *.swp

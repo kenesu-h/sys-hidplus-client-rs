@@ -32,9 +32,9 @@ pub enum ClientMessage {
 
   // For the Iced GUI exclusively (and others that rely on similar messages)
   ServerIPInputChanged(String),
-  InputDelayInputChanged(usize, String),
-  LeftDeadzoneInputChanged(usize, f32),
-  RightDeadzoneInputChanged(usize, f32),
+  InputDelayInputChanged(String),
+  LeftDeadzoneInputChanged(f32),
+  RightDeadzoneInputChanged(f32),
   TrySetAll(usize, String, f32, f32),
   ScreenChanged(ClientScreen)
 }
