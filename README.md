@@ -8,9 +8,9 @@ PaskaPanishkes. You can find its repo at:
 sys-hidplus is a sysmodule for a Nintendo Switch hacked to run custom firmware.
 A sysmodule can be seen as a background service like those on most computers.
 This sysmodule allows the Switch to receive controller inputs sent by a computer
-using a client. In other words, gamepads can be used for a Switch over a network
-rather than through a direct USB or Bluetooth connection. This in turn allows
-users to use normally unsupported controllers - such as Xbox and PS4
+using a client. In other words, controllers can be used for a Switch over a
+network rather than through a direct USB or Bluetooth connection. This in turn
+allows users to use normally unsupported controllers - such as Xbox and PS4
 controllers, or even keyboards - although similar functionality is provided by:
 - [sys-con](https://github.com/cathery/sys-con), which offers USB connectivity
   for most popular controllers.
