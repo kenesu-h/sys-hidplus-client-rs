@@ -73,9 +73,37 @@ impl ClientController {
     }
   }
 
-  // A getter for the gamepads; you may need this for application structs.
+  // Getters
   pub fn get_pads(&self) -> &Vec<EmulatedPad> {
     return self.model.get_pads();
+  }
+
+  pub fn get_input_delay(&self, i: &usize) -> &u8 {
+    return &self.input_delays[*i];
+  }
+
+  pub fn get_left_deadzone(&self, i: &usize) -> &f32 {
+    return &self.left_deadzones[*i];
+  }
+
+  pub fn get_right_deadzone(&self, i: &usize) -> &f32 {
+    return &self.right_deadzones[*i];
+  }
+
+  pub fn get_anarchy_mode(&self) -> &bool {
+    return &self.anarchy_mode;
+  }
+
+  pub fn get_running(&self) -> &bool {
+    return &self.running;
+  }
+
+  pub fn get_server_ip(&self) -> &String {
+    return self.model.get_server_ip();
+  }
+
+  pub fn get_input_map(&self) -> &HashMap<usize, usize> {
+    return &self.input_map;
   }
 
   // A bunch of setters, but they'll save the config every time they're used.

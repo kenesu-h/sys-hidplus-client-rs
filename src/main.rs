@@ -10,6 +10,8 @@ use crate::app::{
   iced::application::IcedApp
 };
 
+use std::env;
+
 #[macro_use(c)]
 extern crate cute;
 
@@ -17,5 +19,11 @@ extern crate cute;
 extern crate structure;
 
 fn main() -> () {
-  CliApp::initialize();
+  let args: Vec<String> = env::args().collect();
+ 
+  if args.contains(&String::from("cli")) {
+    CliApp::initialize();
+  } else {
+    IcedApp::initialize();
+  }
 }

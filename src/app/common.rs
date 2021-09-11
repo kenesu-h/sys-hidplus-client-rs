@@ -15,6 +15,7 @@ pub trait ClientApp {
  * controller. Application structs are expected to parse user input into these
  * messages.
  */
+#[derive(Debug, Clone)]
 pub enum ClientMessage {
   Tick,
   Start,
@@ -27,5 +28,19 @@ pub enum ClientMessage {
   SetInputDelay(usize, u8),
   SetLeftDeadzone(usize, f32),
   SetRightDeadzone(usize, f32),
-  SetAnarchyMode(bool)
+  SetAnarchyMode(bool),
+
+  // For the Iced GUI exclusively (and others that rely on similar messages)
+  ServerIPInputChanged(String),
+  InputDelayInputChanged(usize, String),
+  LeftDeadzoneInputChanged(usize, f32),
+  RightDeadzoneInputChanged(usize, f32),
+  TrySetAll(usize, String, f32, f32),
+  ScreenChanged(ClientScreen)
+}
+
+#[derive(Debug, Clone)]
+pub enum ClientScreen {
+  Main,
+  GamepadConfig(usize)
 }

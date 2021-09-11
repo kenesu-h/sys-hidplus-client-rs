@@ -20,11 +20,25 @@ use std::{
   time::Duration
 };
 
+/**
+ * Represents a command line application.
+ * 
+ * Like all other application structs, the application must have a controller
+ * to send function calls to. However, since this reads from stdin (command
+ * line input), we must also have a receiver to do so.
+ */
 pub struct CliApp {
   controller: ClientController,
   receiver: Receiver<String>
 }
 
+/**
+ * Spawns a channel that gives us a receiver, which allows us to read from
+ * stdin.
+ * 
+ * However, this has an unfortunate side effect of reading arrow key inputs
+ * too, which isn't quite supposed to happen.
+ */
 fn spawn_stdin_channel() -> Receiver<String> {
   let (tx, rx) = mpsc::channel::<String>();
   thread::spawn(move || loop {
@@ -36,6 +50,10 @@ fn spawn_stdin_channel() -> Receiver<String> {
 }
 
 impl CliApp {
+  /**
+   * Constructs a new command line application using a controller to read from
+   * SDL, and a receiver to read from stdin.
+   */
   pub fn new() -> CliApp {
     match ClientModel::new() {
       Ok(model) => return CliApp {
@@ -46,6 +64,11 @@ impl CliApp {
     }
   }
 
+  /**
+   * Starts the main event loop by first initializing the controller, then
+   * looping at a rate of 60 FPS. Each loop, the application will read from
+   * stdin, parse it, and update the controller.
+   */
   fn start_loop(&mut self) -> () {
     let ticks = tick(Duration::from_secs_f32(1.0 / 60.0));
     match self.controller.initialize() {
@@ -68,6 +91,7 @@ impl CliApp {
     }
   } 
 
+  // Parses the buffer in stdin, transforming it into a message.
   fn parse_buffer(&mut self) -> Result<(), String> {
     return match self.receiver.try_recv() {
       Ok(buffered) => {
@@ -91,6 +115,12 @@ impl CliApp {
     } 
   }
 
+  /**
+   * Transforms a keyword and argument combination into a message to be parsed.
+   * 
+   * Returns an Ok if the combination could be successfully parsed, but an Err
+   * otherwise.
+   */
   fn to_message(
     &mut self, keyword: &str, args: &[&str]
   ) -> Result<ClientMessage, String> {
@@ -179,7 +209,7 @@ impl CliApp {
             } else {
               return Err(
                 format!(
-                  "'{}' could not be parsed into an 32-bit float (a decimal).",
+                  "'{}' could not be parsed into a 32-bit float (a decimal).",
                   args[1]
                 )
               );
@@ -206,7 +236,7 @@ impl CliApp {
             } else {
               return Err(
                 format!(
-                  "'{}' could not be parsed into an 32-bit float (a decimal).",
+                  "'{}' could not be parsed into a 32-bit float (a decimal).",
                   args[1]
                 )
               );
@@ -254,6 +284,7 @@ impl CliApp {
     }
   }
 
+  // Parses a message into its respective method call.
   fn parse_message(&mut self, message: ClientMessage) -> () {
     match message {
       ClientMessage::Tick => self.update(),
@@ -267,10 +298,17 @@ impl CliApp {
       ClientMessage::SetInputDelay(i, input_delay) => self.set_input_delay(&i, &input_delay),
       ClientMessage::SetLeftDeadzone(i, deadzone) => self.set_left_deadzone(&i, &deadzone),
       ClientMessage::SetRightDeadzone(i, deadzone) => self.set_right_deadzone(&i, &deadzone), 
-      ClientMessage::SetAnarchyMode(anarchy_mode) => self.set_anarchy_mode(&anarchy_mode)
+      ClientMessage::SetAnarchyMode(anarchy_mode) => self.set_anarchy_mode(&anarchy_mode),
+      ClientMessage::ServerIPInputChanged(_) => (),
+      ClientMessage::InputDelayInputChanged(_, _) => (),
+      ClientMessage::LeftDeadzoneInputChanged(_, _) => (),
+      ClientMessage::RightDeadzoneInputChanged(_, _) => (),
+      ClientMessage::TrySetAll(_, _, _, _) => (),
+      ClientMessage::ScreenChanged(_) => ()
     }
   }
 
+  // Updates the controller and prints out all results.
   fn update(&mut self) -> () {
     for result in self.controller.update() {
       match result {
@@ -284,6 +322,7 @@ impl CliApp {
     }
   }
 
+  // Tells the controller to start the client.
   fn start(&mut self) -> () {
     match self.controller.start() {
       Ok(o) => self.write_ok(o),
@@ -291,6 +330,7 @@ impl CliApp {
     }
   }
 
+  // Tells the controller to stop the client.
   fn stop(&mut self) -> () {
     match self.controller.stop() {
       Ok(o) => self.write_ok(o),
@@ -298,6 +338,7 @@ impl CliApp {
     }
   }
 
+  // Tells the controller to restart the client.
   fn restart(&mut self) -> () {
     match self.controller.restart() {
       Ok(o) => self.write_ok(o),
@@ -305,6 +346,11 @@ impl CliApp {
     }
   }
 
+  /**
+   * Tells the controller to exit the client or at least prepare to.
+   * 
+   * Exits with a code of 0 if it's okay to exit, but panics otherwise.
+   */
   fn exit(&mut self) -> () {
     match self.controller.exit_prep() {
       Ok(_) => std::process::exit(0),
@@ -312,6 +358,7 @@ impl CliApp {
     }
   }
 
+  // Tells the controller to set the server IP.
   fn set_server_ip(&mut self, server_ip: &String) -> () {
     match self.controller.set_server_ip(server_ip) {
       Ok(o) => self.write_ok(o),
@@ -319,6 +366,7 @@ impl CliApp {
     }
   }
 
+  // Tells the controller to set the Switch pad type of a slot.
   fn set_switch_pad(&mut self, i: &usize, switch_pad: &SwitchPad) -> () {
     match self.controller.set_switch_pad(i, switch_pad) {
       Ok(o) => self.write_ok(o),
@@ -326,6 +374,7 @@ impl CliApp {
     }
   }
 
+  // Tells the controller to set the input delay of a slot.
   fn set_input_delay(&mut self, i: &usize, input_delay: &u8) -> () {
     match self.controller.set_input_delay(i, input_delay) {
       Ok(o) => self.write_ok(o),
@@ -333,6 +382,7 @@ impl CliApp {
     }
   }
 
+  // Tells the controller to set the left deadzone of a slot.
   fn set_left_deadzone(&mut self, i: &usize, deadzone: &f32) -> () {
     match self.controller.set_left_deadzone(i, deadzone) {
       Ok(o) => self.write_ok(o),
@@ -340,6 +390,7 @@ impl CliApp {
     }
   }
 
+  // Tells the controller to set the right deadzone of a slot.
   fn set_right_deadzone(&mut self, i: &usize, deadzone: &f32) -> () {
     match self.controller.set_right_deadzone(i, deadzone) {
       Ok(o) => self.write_ok(o),
@@ -347,6 +398,7 @@ impl CliApp {
     }
   }
 
+  // Tells the controller to either enable or disable anarchy mode.
   fn set_anarchy_mode(&mut self, anarchy_mode: &bool) -> () {
     match self.controller.set_anarchy_mode(anarchy_mode) {
       Ok(o) => self.write_ok(o),
@@ -496,10 +548,12 @@ impl CliApp {
     }
   }
 
+  // Writes a string to stdout as an Ok message.
   fn write_ok(&self, s: String) -> () {
     println!("OK: {}", s);
   }
 
+  // Writes a string to stdout as an error message.
   fn write_err(&self, s: String) -> () {
     println!("ERR: {}", s);
   }
