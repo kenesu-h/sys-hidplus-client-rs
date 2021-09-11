@@ -40,7 +40,7 @@ stress that as a result, this is NOT meant to be a replacement for Pask's work,
 but rather an alternative for those who want to use these experimental features
 and don't mind the possibility of something breaking.**
 
-## What could break?
+## What happens when something breaks? How often?
 I know I made it sound scary, but there shouldn't be anything that could do
 permanent damage to your computer or your Switch. While there is a possibility
 that something bad could happen, I didn't come across any fatal problems after
@@ -51,6 +51,12 @@ continued to act as if I were still holding A. This was just fixed by
 restarting and reconnecting the client though. I've also never seen the
 sysmodule or my Switch crash, but you could just uninstall the sysmodule if that
 ever happened.
+
+The client also only ever crashed when I made a major coding oversight, or if a
+library I used did the same. However, these are somewhat rare and the crashes
+that do happen because of libraries can be caught and stopped. Either way,
+crashes shouldn't happen very often at all and I'm told the client is quite
+stable, though this may change as new features are being added.
 
 If you aren't deterred by any of that, read onto the next few sections for
 details about new features, installation, usage, and setup with Parsec:
