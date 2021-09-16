@@ -6,6 +6,13 @@ Switch before you can use my client.
 
 ### You need:
 - A Nintendo Switch with Atmosphere CFW installed.
+  - My fork has been built upon version 1.1 of the original sys-hidplus, which
+    is intended for Switch FW 12.x.x.
+  - You may encounter issues if you're using Switch FW 10.x.x to 11.x.x. If
+    you're using this firmware version, either update to 12.x.x or contact me
+    directly.
+  - Atmosphere currently does not support 13.0.0 and it's possible that this
+    sysmodule will break once it does. Avoid updating to it if you can.
 - A file archiver such as 7-Zip, WinRAR, or some equivalent.
 - A way of moving files to your Switch's SD card.
 
