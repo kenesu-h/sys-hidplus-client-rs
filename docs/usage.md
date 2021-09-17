@@ -37,7 +37,8 @@ Switch before you can use my client.
      consult [the Build page](./build.md) for directions on building the client
      for your operating system. Feel free to contact me directly if you want help.
 2. Using a file archiver, extract the contents of the latest release's archive
-   into a folder. Preferably, the folder should be dedicated to the client.
+   into a folder. Overwrite files if asked.
+  - Preferably, the folder should be dedicated to the client.
 
 
 # Usage
