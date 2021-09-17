@@ -218,9 +218,13 @@ These controllers are confirmed to be practically plug-and-play:
     can't be changed.
 - Joy-Cons
 
-Even a Razer Kishi controller for a phone will work (thanks Kemosahbee!), so as
-long as the phone is connected via Parsec. Check out
-[the Parsec page](./parsec.md) for information on setup.
+Kemosahbee has confirmed the following:
+- Razer Kishis
+  - They work as long as the phone is connected via Parsec. Check out
+    [the Parsec page](./parsec.md) for information on setup.
+
+ConspiracyFactualist has confirmed the following:
+- Controllers connected via a MAYFLASH Magic-NS adapter.
 
 These controllers will require external software:
 - Keyboard (and/or Mouse)
