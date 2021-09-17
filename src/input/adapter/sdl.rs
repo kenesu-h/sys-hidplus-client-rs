@@ -48,6 +48,9 @@ pub struct SdlAdapter {
 
 impl SdlAdapter {
   pub fn new() -> SdlAdapter {
+    // Force SDL to accept joystick inputs when in the background
+    sdl2::hint::set("SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS", "1");
+
     let sdl_context: Sdl = sdl2::init().unwrap();
 
     let game_controller: GameControllerSubsystem =
