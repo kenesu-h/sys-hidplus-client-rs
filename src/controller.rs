@@ -38,7 +38,6 @@ pub struct ClientController {
   input_delays: Vec<u8>,
   left_deadzones: Vec<f32>,
   right_deadzones: Vec<f32>,
-  manual_assign: bool,
   anarchy_mode: bool,
 
   model: ClientModel,
@@ -63,7 +62,6 @@ impl ClientController {
       input_delays: vec!(),
       left_deadzones: vec!(),
       right_deadzones: vec!(),
-      manual_assign: false,
       anarchy_mode: false,
 
       model: model,
@@ -90,10 +88,6 @@ impl ClientController {
 
   pub fn get_right_deadzone(&self, i: &usize) -> &f32 {
     return &self.right_deadzones[*i];
-  }
-
-  pub fn get_manual_assign(&self) -> &bool {
-    return &self.manual_assign;
   }
 
   pub fn get_anarchy_mode(&self) -> &bool {
@@ -148,17 +142,8 @@ impl ClientController {
     return self.save_config();
   }
 
-  pub fn set_manual_assign(
-    &mut self, manual_assign: &bool
-  ) -> Result<String, String> {
-    self.manual_assign = *manual_assign;
-    return self.save_config();
-  }
-
   // Functionally the same as the rest of the setters, but clears all gamepads.
-  pub fn set_anarchy_mode(
-    &mut self, anarchy_mode: &bool
-  ) -> Result<String, String> {
+  pub fn set_anarchy_mode(&mut self, anarchy_mode: &bool) -> Result<String, String> {
     self.anarchy_mode = *anarchy_mode;
     self.input_map.clear();
     for i in 0..8 {
@@ -191,7 +176,6 @@ impl ClientController {
         self.input_delays = config.get_input_delays().clone();
         self.left_deadzones = config.get_left_deadzones().clone();
         self.right_deadzones = config.get_right_deadzones().clone();
-        self.manual_assign = config.get_manual_assign().clone();
         self.anarchy_mode = config.get_anarchy_mode().clone();
         return Ok("Config successfully loaded.".to_string());
       },
@@ -219,7 +203,6 @@ impl ClientController {
       self.input_delays.clone(),
       self.left_deadzones.clone(),
       self.right_deadzones.clone(),
-      self.manual_assign.clone(),
       self.anarchy_mode.clone()
     );
   }
@@ -422,18 +405,9 @@ impl ClientController {
             &(self.left_deadzones[*i], self.right_deadzones[*i])
           );
         } else {
-          match event {
-            InputEvent::GamepadAxis(gamepad_id, _, _) => if !self.manual_assign {
-              results.push(self.connect(&gamepad_id))
-            },
-            InputEvent::GamepadButton(gamepad_id, button, value) => {
-              if self.manual_assign {
-                if button == InputButton::RightBumper && value == 1 {
-                  results.push(self.connect(&gamepad_id));
-                }
-              } else {
-                results.push(self.connect(&gamepad_id));
-              }
+          if let InputEvent::GamepadButton(gamepad_id, button, value) = event {
+            if button == InputButton::RightBumper && value == 1 {
+              results.push(self.connect(&gamepad_id));
             }
           }
         }

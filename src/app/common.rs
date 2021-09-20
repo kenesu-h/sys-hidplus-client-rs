@@ -28,7 +28,6 @@ pub enum ClientMessage {
   SetInputDelay(usize, u8),
   SetLeftDeadzone(usize, f32),
   SetRightDeadzone(usize, f32),
-  SetManualAssign(bool),
   SetAnarchyMode(bool),
 
   // For the Iced GUI exclusively (and others that rely on similar messages)

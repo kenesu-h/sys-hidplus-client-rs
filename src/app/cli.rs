@@ -255,24 +255,6 @@ impl CliApp {
           );
         }
       },
-      "set_manual_assign" => {
-        if args.len() >= 1 {
-          if let Ok(manual_assign) = args[0].parse::<bool>() {
-            return Ok(ClientMessage::SetManualAssign(manual_assign));
-          } else {
-            return Err(
-              format!(
-                "'{}' could not be parsed into a bool ('true' or 'false').",
-                args[0]
-              )
-            )
-          }
-        } else {
-          return Err(
-            String::from("set_manual_assign requires at least one argument.")
-          );
-        }
-      },
       "set_anarchy_mode" => {
         if args.len() >= 1 {
           if let Ok(anarchy_mode) = args[0].parse::<bool>() {
@@ -290,7 +272,7 @@ impl CliApp {
             String::from("set_anarchy_mode requires at least one argument.")
           );
         }
-      },
+      }
       "help" => {
         if args.len() >= 1 {
           return Ok(ClientMessage::Help(Some(String::from(args[0]))));
@@ -315,8 +297,7 @@ impl CliApp {
       ClientMessage::SetSwitchPad(i, switch_pad) => self.set_switch_pad(&i, &switch_pad),
       ClientMessage::SetInputDelay(i, input_delay) => self.set_input_delay(&i, &input_delay),
       ClientMessage::SetLeftDeadzone(i, deadzone) => self.set_left_deadzone(&i, &deadzone),
-      ClientMessage::SetRightDeadzone(i, deadzone) => self.set_right_deadzone(&i, &deadzone),
-      ClientMessage::SetManualAssign(manual_assign) => self.set_manual_assign(&manual_assign),
+      ClientMessage::SetRightDeadzone(i, deadzone) => self.set_right_deadzone(&i, &deadzone), 
       ClientMessage::SetAnarchyMode(anarchy_mode) => self.set_anarchy_mode(&anarchy_mode),
       ClientMessage::ServerIPInputChanged(_) => (),
       ClientMessage::InputDelayInputChanged(_) => (),
@@ -412,13 +393,6 @@ impl CliApp {
   // Tells the controller to set the right deadzone of a slot.
   fn set_right_deadzone(&mut self, i: &usize, deadzone: &f32) -> () {
     match self.controller.set_right_deadzone(i, deadzone) {
-      Ok(o) => self.write_ok(o),
-      Err(e) => self.write_err(e)
-    }
-  }
-
-  fn set_manual_assign(&mut self, manual_assign: &bool) -> () {
-    match self.controller.set_manual_assign(manual_assign) {
       Ok(o) => self.write_ok(o),
       Err(e) => self.write_err(e)
     }
