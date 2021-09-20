@@ -10,6 +10,10 @@ use serde::{Serialize, Deserialize};
  * - input_delays represent how much input delay each slot will have.
  * - left_deadzones represent the radius of the left deadzone for each slot.
  * - right_deadzones represent the radius of the right deadzone for each slot.
+ * - manual_assign represents whether controllers are manually assigned using
+ *   right bumper. When disabled, controllers will be automatically assigned
+ * - anarchy_mode represents whether anarchy mode is enabled (all controllers
+ *   control a single one).
  */
 #[derive(Serialize, Deserialize)]
 pub struct Config {
@@ -18,6 +22,7 @@ pub struct Config {
   input_delays: Vec<u8>,
   left_deadzones: Vec<f32>,
   right_deadzones: Vec<f32>,
+  manual_assign: bool,
   anarchy_mode: bool
 }
 
@@ -29,6 +34,7 @@ impl Default for Config {
       input_delays: c!(0, for _i in 0..8),
       left_deadzones: c!(0.0, for _i in 0..8),
       right_deadzones: c!(0.0, for _i in 0..8),
+      manual_assign: true,
       anarchy_mode: false
     }
   }
@@ -37,7 +43,8 @@ impl Default for Config {
 impl Config {
   pub fn new(
     server_ip: String, switch_pads: Vec<SwitchPad>, input_delays: Vec<u8>,
-    left_deadzones: Vec<f32>, right_deadzones: Vec<f32>, anarchy_mode: bool
+    left_deadzones: Vec<f32>, right_deadzones: Vec<f32>, manual_assign: bool,
+    anarchy_mode: bool
   ) -> Config {
     return Config {
       server_ip: server_ip,
@@ -45,6 +52,7 @@ impl Config {
       input_delays: input_delays,
       left_deadzones: left_deadzones,
       right_deadzones: right_deadzones,
+      manual_assign: manual_assign,
       anarchy_mode: anarchy_mode
     }
   }
@@ -67,6 +75,10 @@ impl Config {
 
   pub fn get_right_deadzones(&self) -> &Vec<f32> {
     return &self.right_deadzones;
+  }
+
+  pub fn get_manual_assign(&self) -> &bool {
+    return &self.manual_assign;
   }
 
   pub fn get_anarchy_mode(&self) -> &bool {

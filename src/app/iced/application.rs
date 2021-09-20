@@ -48,6 +48,7 @@ pub struct IcedApp {
   button_gamepad_7: button::State,
   button_gamepad_8: button::State,
 
+  button_manual_assign: button::State,
   button_anarchy: button::State,
   button_start: button::State,
   button_exit: button::State,
@@ -97,6 +98,7 @@ impl IcedApp {
           button_gamepad_7: button::State::new(),
           button_gamepad_8: button::State::new(),
 
+          button_manual_assign: button::State::new(),
           button_anarchy: button::State::new(),
           button_start: button::State::new(),
           button_exit: button::State::new(), 
@@ -274,11 +276,35 @@ impl IcedApp {
     buttons = buttons.push(
       Tooltip::new(
         Button::new(
+          &mut self.button_manual_assign,
+          Text::new(
+            match &self.controller.get_manual_assign() {
+              true => "Manual Assign On",
+              false => "Manual Assign Off"
+            }
+          )
+        )
+          .width(Length::Shrink)
+          .style(self.theme)
+          .on_press(
+            match &self.controller.get_manual_assign() {
+              true => ClientMessage::SetManualAssign(false),
+              false => ClientMessage::SetManualAssign(true)
+            }
+          ),
+        "Toggles whether right bumper must be pressed to assign controllers.",
+        tooltip::Position::Bottom
+      )
+    );
+
+    buttons = buttons.push(
+      Tooltip::new(
+        Button::new(
           &mut self.button_anarchy,
           Text::new(
             match &self.controller.get_anarchy_mode() {
-              true => "Stop Anarchy Mode",
-              false => "Start Anarchy Mode"
+              true => "Anarchy Mode On",
+              false => "Anarchy Mode Off"
             }
           )
         )
@@ -639,6 +665,11 @@ impl Application for IcedApp {
           )
         }
       },
+      ClientMessage::SetManualAssign(manual_assign) => {
+        let result: Result<String, String> =
+          self.controller.set_manual_assign(&manual_assign);
+        self.update_status(result);
+      }
       ClientMessage::SetAnarchyMode(anarchy_mode) => {
         let result: Result<String, String> =
           self.controller.set_anarchy_mode(&anarchy_mode);
