@@ -4,6 +4,49 @@ written in Rust. sys-hidplus is not my project and is developed by
 PaskaPanishkes. You can find its repo at: 
 [PaskaPanishkes/sys-hidplus](https://github.com/PaskaPinishkes/sys-hidplus)
 
+# Table of Contents
+<ol>
+  <li><a href="#context">Context</a></li>
+  <li><a href="#foreword">Foreword</a></li>
+  <li><a href="#new-features">New Features</a></li>
+  <li>
+    <a href="#i-want-to">I want to:</a>
+    <ol>
+      <li>
+        <a href="#setup-the-client-for-general-use">
+          Setup the client for general use.
+        </a>
+      </li>
+      <li>
+        <a href="#setup-the-client-for-remote-play">
+          Setup the client for remote play.
+        </a>
+      </li>
+      <li>
+        <a href="#report-an-issue-or-request-a-feature">
+          Report an issue or request a feature.
+        </a>
+        <ol>
+          <li><a href="#for-issues">For Issues</a></li>
+          <li><a href="#for-feature-requests">For Feature Requests</a></li>
+        </ol>
+      </li>
+      <li>
+        <a href="#work-with-the-source-code">
+          Work with the source code.
+        </a>
+      </li>
+      <li>
+        <a href="#contribute-to-this-project">
+          Contribute to this project.
+        </a>
+      </li>
+    </ol>
+  </li>
+  <li><a href="#contact-me">Contact Me</a></li>
+  <li><a href="#credits">Credits</a></li>
+</ol>
+
 # Context
 sys-hidplus is a sysmodule for a Nintendo Switch hacked to run custom firmware.
 A sysmodule can be seen as a background service like those on most computers.
@@ -31,105 +74,89 @@ continued development.
 # Foreword
 Pask has also
 [rewritten their original client using C#](https://github.com/PaskaPinishkes/SwitchSysHidplusClient),
-but they suspect that it may only work for Windows. For the time being, I plan
-to continue working on this client to support Mac and Linux computers, and as a
-learning experience for myself. Most of all however, I want to use this as an
-outlet to implement and test more experimental features, which Pask could add
-to their client at a later point once we find that they're stable. **I want to
-stress that as a result, this is NOT meant to be a replacement for Pask's work,
-but rather an alternative for those who want to use these experimental features
-and don't mind the possibility of something breaking.**
-
-## What happens when something breaks? How often?
-I know I made it sound scary, but there shouldn't be anything that could do
-permanent damage to your computer or your Switch. While there is a possibility
-that something bad could happen, I didn't come across any fatal problems after
-over a month of testing and on-and-off usage, not even when crashes happened.
-Even then, there was a time where the client crashed and the last input I made
-hung - in other words, I was holding A as the client crashed and the sysmodule
-continued to act as if I were still holding A. This was just fixed by
-restarting and reconnecting the client though. I've also never seen the
-sysmodule or my Switch crash, but you could just uninstall the sysmodule if that
-ever happened.
-
-The client also only ever crashed when I made a major coding oversight, or if a
-library I used did the same. However, these are somewhat rare and the crashes
-that do happen because of libraries can be caught and stopped. Either way,
-crashes shouldn't happen very often at all and I'm told the client is quite
-stable, though this may change as new features are being added.
+but they suspect that it may only work for Windows. I plan to continue working
+on this client to support Mac and Linux computers, and as a learning experience
+for myself. Most of all however, I want to use this as an outlet to implement
+and test more experimental features that Pask could add to their client at a
+later point. **I want to stress that as a result, this is NOT meant to be a
+replacement for Pask's work, but rather an alternative for those who want to use
+these experimental features and don't mind the possibility of something
+breaking.** The worst case scenario just involves crashes or input lag, which
+shoudln't happen often at all. I'm also told the client is quite stable, though
+this may change as new features are added.
 
 If you aren't deterred by any of that, read onto the next few sections for
-details about new features, installation, usage, and setup with Parsec:
+details about new features, setup, and more.
  
-## New Features
-As of 1.1.0-alpha.4, here are the new features that this client has:
-- Support for up to 8 controllers, allowing you to take advantage of Smash's
-  8-player mode.
+# New Features
+As of the latest release, here are the new features that this client has:
+- Support for up to 8 controllers.
 - The home button is usable by controllers.
 - You can configure these settings for individual controller slots:
-  - Artificial input delay, useful for putting yourself at an even playing
-    field with those who have some input delay playing through Parsec.
-  - Left and right analog stick deadzones, useful for eliminating controller
-    drift and helping stick flicks get recognized more easily.
-- These settings are saved to a file and loaded for every client session.
-- Users press a button (right bumper) to assign their controller to the first
-  open slot. This is a QOL change and is intended to give users more control
-  over which controller goes into what slot.
+  - Artificial input delay.
+  - Left and right analog stick deadzones.
+- Persistent settings between client sessions.
+- Controller assignment to slots by pressing a button (right bumper).
 
-## Potential Problems
-These are potential problems my forked sysmodule and client may have. It would
-be appreciated if people could test these scenarios and report any appropriate
-information.
-- Using the GUI may increase input delay.
-  - The command line interface, however, is available for use as an alternative
-    and will likely have minimal input delay in comparison.
-- Input delay may increase with an increased amount of players.
-  - I have only tested with with four concurrent players at most, but there was
-    no noticeable input delay. However, this may not be the same case for more
-    than four players, as well as hosts with weaker computers.
+# I want to:
+## Setup the client for general use.
+Head over to [Setup](./setup.md) and follow the instructions there.
 
-# Installation & Usage
-For information on this, please consult
-[the Installation & Usage page](./docs/usage.md).
+## Setup the client for remote play.
+Head over to [Remote Play](./remote-play.md) and follow the instructions there.
 
-# Parsec Usage
-If you want to setup sys-hidplus to allow for remote play of your Switch, please
-consult [the Parsec page](./docs/parsec.md).
+## Report an issue or request a feature.
+You can
+[open a GitHub issue](https://github.com/kenesu-h/sys-hidplus-client-rs/issues)
+with details about your issue or feature request. Before you do though, I ask
+that you double-check the open and [known issues](./issues.md) before you open
+one for yourself.
 
-# Build from Source
-For information on this, please consult [the Build page](./docs/build.md).
+There isn't a strict format you have to follow, but doing the following will help
+me debug your issue better or get a better idea of what you want out for a
+feature:
 
-# Known Issues
-- Sideways Joy-Con support is limited.
-  [This is out of our control for the most part.](https://github.com/switchbrew/libnx/issues/567)
-- sys-hidplus is known to have input delay in demanding games. I don't have any
-  games to personally test this with, but initial obstacles in development seem
-  to support this; namely, input delay was present when inputs were sent at a
-  much higher frequency than the frame rate.
-- If a controller is forcibly disconnected by the Switch - like through the
-  "Change Grip/Order" menu or the "Disconnect" button in Smash Ultimate - **you
-  cannot reconnect it until you restart your Switch**. I'm also told that you
-  can restart Parsec (if any of the affected controllers were through Parsec),
-  but I'm not totally sure. Either way, it's possible a future sys-hidplus 
-  update can resolve this, but until then, try to avoid any menus and options
-  that forcibly disconnect controllers (if you can).
+### For Issues
+Describe what the issue is and give detailed steps on how to recreate the
+situation, if possible.
 
-# Contact
-If you want to contact me, you can reach me at:
+### For Feature Requests
+Describe what the feature you're requesting and how you plan to use it - in other
+words, your use case for it.
+[This issue](https://github.com/kenesu-h/sys-hidplus-client-rs/issues/3) is a
+pretty good example of how to write one.
+
+## Work with the source code.
+By all means, of course. I welcome anyone to make changes to this project as they
+see fit, so as long as you credit myself, Pask, and anyone else who contributed.
+You are also legally obligated to abide by
+[the GNU GPL-3 license](https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)).
+
+Head over to [Build](./build.md) for information on building this project from
+source.
+
+## Contribute to this project.
+Likewise, if you have any work you'd like to contribute to the project, feel free
+to [open a pull request](https://github.com/kenesu-h/sys-hidplus-client-rs/pulls)
+and/or contact me directly. I'm still new to working with people on GitHub, but
+I won't bite.
+
+# Contact Me
+You can reach me at:
 - officialkennyho@gmail.com
 - Kenesu#2586 on Discord
 - kenesu_h on GBATemp
 
 I tend to respond more quickly to Discord messages than any other form of
-communication.
+communication, but I check all of them pretty frequently.
 
 # Credits
 Special thanks go to:
 - PaskaPinishes for sys-hidplus and their clients, as well as everyone who
-  helped them out. I literally would not be working on this project if it
-  weren't for them.
-- Kemosahbee for testing the client, reporting bugs, and giving suggestions as
-  well as feedback. Many important bugs were found thanks to him and his testing
-  efforts.
+  helped them out.
+- Kemosahbee for testing the client, reporting bugs, chipping in with 
+  suggestions, and giving feedback.
 - cathery for their sysmodule sys-con, which helped me figure out how to emulate
   the home button.
+- ConspiracyFactualist on GBATemp for reporting an input-related bug and being
+  patient with testing.

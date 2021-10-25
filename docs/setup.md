@@ -1,48 +1,44 @@
-# Installation
+# Setup
+This documentation is intended to help you through the steps of setting up
+sys-hidplus-client-rs on your computer for general use. General use includes
+using normally-unsupported controllers or playing on your Switch remotely.
 
-## sys-hidplus
-This client requires my fork of sys-hidplus. You'll have to install it on your
-Switch before you can use my client.
+# sys-hidplus
+Although I refer to my client as an alternative client, the latest release
+requires my fork of sys-hidplus in order to have 8-controller support. You'll 
+have to install it on your Switch first.
 
-### You need:
+## Requirements
 - A Nintendo Switch with Atmosphere CFW installed.
-  - My fork has been built upon version 1.1 of the original sys-hidplus, which
-    is intended for Switch FW 12.x.x.
-  - You may encounter issues if you're using Switch FW 10.x.x to 11.x.x. If
-    you're using this firmware version, either update to 12.x.x or contact me
-    directly.
-  - Atmosphere currently does not support 13.0.0 and it's possible that this
-    sysmodule will break once it does. Avoid updating to it if you can.
+  - The latest Switch firmware and atmosphere versions are recommended. You may
+    encounter problems otherwise.
 - A file archiver such as 7-Zip, WinRAR, or some equivalent.
 - A way of moving files to your Switch's SD card.
 
-### Directions
+## Directions
 1. Download the latest version of the sys-hidplus sysmodule from
    [the releases page](https://github.com/kenesu-h/sys-hidplus/releases).
 2. Using a file archiver, extract the contents of the latest release's archive
    into the root of your Switch's SD card. Overwrite files if asked.
 3. If your Switch is already running, reboot into CFW.
 
-## sys-hidplus-client-rs
+# sys-hidplus-client-rs
 
-### You need:
+## Requirements
 - A file archiver such as 7-Zip, WinRAR, or some equivalent.
 
-### Directions
+## Directions
 1. Download the latest version of the client from
    [the releases page](https://github.com/kenesu-h/sys-hidplus-client-rs/releases).
    Specifically, download the archive for your specific operating system.
-   - Releases for Mac OS and Linux may not be available since I may not have
-     access to those operating systems. If you use either of these, please
-     consult [the Build page](./build.md) for directions on building the client
-     for your operating system. Feel free to contact me directly if you want help.
+   - Mac OS and Linux releases may not be available since I may not have access
+     to those operating systems. If you use either of these, please consult
+     [Build](./build.md) for directions on building the client for your 
+     operating system. Feel free to contact me directly if you want help.
 2. Using a file archiver, extract the contents of the latest release's archive
    into a folder. Overwrite files if asked.
-  - Preferably, the folder should be dedicated to the client.
-
 
 # Usage
-
 ## Startup
 Follow the steps in this section every time you want to startup the client.
 
@@ -64,7 +60,6 @@ interface, you're going to have to run the client using your OS's terminal/shell
 
 If you want to run the command line interface, run the executable with the
 following argument: `-- cli`.
-
 
 ## First-Time Setup
 On your first startup, you will have to set your Switch's IP before you can make
