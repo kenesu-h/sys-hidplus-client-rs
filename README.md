@@ -82,7 +82,7 @@ later point. **I want to stress that as a result, this is NOT meant to be a
 replacement for Pask's work, but rather an alternative for those who want to use
 these experimental features and don't mind the possibility of something
 breaking.** The worst case scenario just involves crashes or input lag, which
-shoudln't happen often at all. I'm also told the client is quite stable, though
+shouldn't happen often at all. I'm also told the client is quite stable, though
 this may change as new features are added.
 
 If you aren't deterred by any of that, read onto the next few sections for
