@@ -143,7 +143,6 @@ I won't bite.
 
 # Contact Me
 You can reach me at:
-- officialkennyho@gmail.com
 - Kenesu#2586 on Discord
 - kenesu_h on GBATemp
 
