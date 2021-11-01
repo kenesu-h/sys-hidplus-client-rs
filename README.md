@@ -100,16 +100,16 @@ As of the latest release, here are the new features that this client has:
 
 # I want to:
 ## Setup the client for general use.
-Head over to [Setup](./setup.md) and follow the instructions there.
+Head over to [Setup](./docs/setup.md) and follow the instructions there.
 
 ## Setup the client for remote play.
-Head over to [Remote Play](./remote-play.md) and follow the instructions there.
+Head over to [Remote Play](./docs/remote-play.md) and follow the instructions there.
 
 ## Report an issue or request a feature.
 You can
 [open a GitHub issue](https://github.com/kenesu-h/sys-hidplus-client-rs/issues)
 with details about your issue or feature request. Before you do though, I ask
-that you double-check the open and [known issues](./issues.md) before you open
+that you double-check the open and [known issues](./docs/issues.md) before you open
 one for yourself.
 
 There isn't a strict format you have to follow, but doing the following will help
@@ -132,7 +132,7 @@ see fit, so as long as you credit myself, Pask, and anyone else who contributed.
 You are also legally obligated to abide by
 [the GNU GPL-3 license](https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)).
 
-Head over to [Build](./build.md) for information on building this project from
+Head over to [Build](./docs/build.md) for information on building this project from
 source.
 
 ## Contribute to this project.
