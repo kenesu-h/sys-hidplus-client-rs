@@ -1,4 +1,23 @@
 # sys-hidplus-client-rs
+
+## (9/20/23) Note to anyone who takes a look at this repo:
+
+imo this codebase is just a plain mess and you're probably gonna hate looking at it as much as I do lol (hence why I haven't worked on it at all recently)
+
+I'm planning a rewrite (at some point) but have no clue when I'll be _motivated_ to do it at all
+
+until then, if you really want to take a look, be sure to take a look at branch 1.1.0-alpha. even though I never merged it to main, it'll have the latest changes with the following off the top of my head:
+- 8 player support
+- anarchy mode
+
+just so you don't have to scroll all the way down, I'm `kenesu_h` on Discord and GBATemp, but I am way more likely to quickly respond to you on Discord
+
+you won't bother me too much, if you want any insight into the codebase, just give a DM and point out that you're not just some rando/scammer
+
+for everyone who's starred this, sorry for the non-eventful commit, but I've noticed more people have been doing so lately and thought that folks should at least be aware of what's been going on
+
+## Overview
+
 This is a client for the Nintendo Switch homebrew sysmodule "sys-hidplus",
 written in Rust. sys-hidplus is not my project and is developed by
 PaskaPanishkes. You can find its repo at: 
@@ -188,8 +207,7 @@ download part of course.
   line.
 
 # Contact
-If you want to contact me, you can reach me at Kenesu#2586 on Discord or
-kenesu_h on GBATemp.
+If you want to contact me, you can reach me at kenesu_h on Discord (preferred) or GBATemp.
 
 # Credits
 Credits go to PaskaPinishes for sys-hidplus (and the associated client) as a
